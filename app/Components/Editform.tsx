@@ -184,7 +184,7 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
     const update_Sheet = (date: string, title: string, current_status: string) => {
         const base = sheetupdateurl
         const formattedDate = format(date, 'MMM yy'); //date as month year
-         const formated_date=date.split("-").reverse().join("/"); //data date
+        const formated_date = date.split("-").reverse().join("/"); //data date
         const params = {
             date: formated_date,
             title: title,
@@ -196,7 +196,7 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
             img_url: imgUrl,
             mention: mentionstring,
             remarks: remarks,
-            smstatus:sm_status,
+            smstatus: sm_status,
             assignto: assign_to.join(", "),
         }
         const query = Object.entries(params)
@@ -214,7 +214,7 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
                 //alert("Resp:" + response);
             })
             .catch(error => {
-                 //alert("Error:" + error);
+                //alert("Error:" + error);
             });
 
     }
@@ -260,7 +260,7 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
         const dataRef = ref(db, '/items/' + selectedEntry.id);
         set(dataRef, null)
             .then(() => {
-               // alert('Data deleted successfully!');
+                // alert('Data deleted successfully!');
                 delete_from_sheet(selectedEntry.title);
                 clearform();
                 changeformvisibility();
@@ -271,12 +271,12 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
             });
     }
 
-    const delete_from_sheet = (title: string) => {  
+    const delete_from_sheet = (title: string) => {
         const base = delete_sheet_row_url;
-         const formattedDate = format(date, 'MMM yy');
+        const formattedDate = format(date, 'MMM yy');
         const params = {
             search: title,
-            sheetname:formattedDate,
+            sheetname: formattedDate,
             user: username
         };
         const query = Object.entries(params)
@@ -286,12 +286,12 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
         fetch(fullUrl)
             .then(res => res.text())
             .then(response => {
-               // alert("Resp:" + response);
+                // alert("Resp:" + response);
             })
             .catch(error => {
-               // alert("Error:" + error);
+                // alert("Error:" + error);
             });
-        }
+    }
 
 
     useEffect(() => {
@@ -504,7 +504,9 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
                 <div className='bg-black absolute top-0 right-0 w-full h-full z-41 opacity-35'></div>
                 <div className='bg-white p-4 absolute top-1/2 left-1/2 m-4 rounded-lg shadow-lg z-50 flex flex-col gap-4 -translate-x-1/2 -translate-y-1/2'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Enter your key</label>
-                    <p className='text-sm'> {username}, heads up for your permission on changing the database. The data will be deleted permanently. Write 'delete' and click on confirm.</p>
+                    <p className='text-sm'>
+                        {username}, heads up for your permission on changing the database. The data will be deleted permanently. Write &apos;delete&apos; and click on confirm.
+                    </p>
                     <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm text-red-400' type='text' onChange={(e) => { setcnfkey(e.target.value) }} value={cnfkey}></input>
                     <div className='w-full p-4 flex flex-row gap-4 justify-between'>
                         <div className='px-4 text-center py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer' onClick={() => { setIscnfwindowopen(false) }}>Cancel</div>

@@ -27,16 +27,16 @@ export default function Home() {
   const [current_task_user, Setcurrent_task_user] = useState("")
   const [current_task_status, Setcurrent_task_status] = useState("")
 
-  const [items, Setitems] = useState<itemprobes[]>();
-  const [tasks, Settasks] = useState<taskprobs[]>();
-  const [filtered_tasks, Setfiltered_tasks] = useState<taskprobs[]>();
+  const [items, Setitems] = useState<itemprobes[]>([]);
+  const [tasks, Settasks] = useState<taskprobs[]>([]);
+  const [filtered_tasks, Setfiltered_tasks] = useState<taskprobs[]>([]);
 
 
   const [itemcategories, Setitemcategories] = useState<string[]>([])
 
   const [startDate, setStartDate] = useState(new Date("2025-05-30"));
   const [endDate, setEndDate] = useState(new Date());
-  const [filered_items, Setfileterd_items] = useState<itemprobes[]>()
+  const [filered_items, Setfileterd_items] = useState<itemprobes[]>([])
 
   const [iseditformopen, setIseditformopen] = useState(false);
 
@@ -92,7 +92,7 @@ export default function Home() {
   const getFilteredTasks = () => {
 
     let task_user_selected = '';
-    let task_status_selected = '';
+    const task_status_selected = '';
     console.log('current_task_status=' + current_task_status)
 
     if (current_task_user.length >= 3) {
