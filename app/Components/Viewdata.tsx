@@ -1,0 +1,489 @@
+import React, { useEffect, useState } from 'react'
+import { categorylist, itemprobes, mentionlist, platformlist, taskprobs, useUsers } from '../constants'
+import { auth, db, firestore } from '../firebase/firebase';
+import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
+import { add } from 'date-fns';
+import { onAuthStateChanged } from 'firebase/auth';
+import { arrayRemove, arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
+
+type Props = {
+
+    changeformvisibility: () => void | null,
+    selectedEntry?: taskprobs | null
+    currentwimdow?: string
+    useremail?: string
+}
+const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => {
+    const { users, loading } = useUsers();
+    const userlist = users.map(user => user.email);
+
+    const [username, setUsername] = useState<string | null>("null");
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUsername(user?.displayName ?? "Login");
+        });
+        return () => unsubscribe();
+    }, []);
+
+    const [mentions, setMentions] = useState<string[]>([]);
+
+    const [assign_to, setAssignTo] = useState<string[]>([]);
+    const [mentionstring, setMentionstring] = useState<string>("");
+    const [assigned_toString, setassigned_toString] = useState<string>("");
+
+    const [date, setDate] = useState<string>("");
+    const [Smdeadline, setSmDeadline] = useState<string>("");
+    const [title, setTitle] = useState<string>("");
+    const [smDoc, setSmDoc] = useState<string>("");
+
+    const [url, setUrl] = useState<string>("");
+    const [imgUrl, setImgUrl] = useState<string>("");
+    const [description, setDescription] = useState<string>("");
+    const [category, setCategory] = useState<string>("");
+    const [platform, setPlatform] = useState<string>("");
+    const [remarks, setRemarks] = useState<string>("");
+
+
+    const [cnfkey, setcnfkey] = useState<string>("");
+
+    const [iscnfwindowopen, setIscnfwindowopen] = useState(false);
+
+
+
+    useEffect(() => {
+
+        setMentionstring(mentions.join(", "));
+        setassigned_toString(assign_to.join(", "));
+        console.log(date);
+
+    }, [mentions, date, title, smDoc, url, imgUrl, description, category, platform, remarks]);
+
+    const add_to_db = ({ date, createdon, title, assigned_to, deadline, description, category, platform, url, img_url, mention, remarks, sm_status }: itemprobes) => {
+        const dataRef = ref(db, '/items/' + selectedEntry?.id);
+        const newdataRef = push(dataRef);
+        update(dataRef, {
+            date: date,
+            createdon: createdon,
+            title: title,
+            smdoc: smDoc,
+            assigned_to: assigned_to,
+            deadline: deadline,
+            Description: description,
+            category: category,
+            platform: platform,
+            url: url,
+            img_url: img_url,
+            mention: mention,
+            remarks: remarks,
+
+        })
+            .then(() => {
+                console.log('Data added successfully!');
+                addToTask({ title, description, url, assigned_to: assign_to, createdon: new Date().toISOString().split('T')[0] })
+                clearform();
+            })
+            .catch((error) => {
+                console.error('Error adding data:', error);
+            });
+    }
+
+    // const processDBpush = () => {
+    //     if (date == "" || title == "" || category == "") {
+    //         alert("Please fill all the required fields");
+    //         return;
+    //     }
+    //     add_to_db({
+    //         date: date,
+    //         createdon: new Date().toISOString().split('T')[0],
+    //         title: title,
+    //         subtitle: smTitle,
+    //         assigned_to: assigned_toString,
+    //         deadline: Smdeadline,
+    //         description: description,
+    //         category: category,
+    //         platform: platform,
+    //         url: url,
+    //         img_url: imgUrl,
+    //         sm_status: "",
+    //         mention: mentionstring,
+    //         website_status: false,
+    //         remarks: remarks
+    //     });
+    //     changeformvisibility();
+
+    // }
+
+    const mark_as = (value: string) => {
+        if (!selectedEntry?.id) {
+            alert("No entry selected");
+            return;
+
+        }
+        let current_completed_by_list = selectedEntry.completed_by;
+        current_completed_by_list?.push("sree@123")
+        const dataRef = ref(db, '/items/' + selectedEntry?.id);
+        const newdataRef = push(dataRef);
+        update(dataRef, {
+
+
+
+            sm_status: value,
+
+
+        })
+            .then(() => {
+                console.log('Data added successfully!');
+                clearform();
+                updatetask(title, value)
+
+                changeformvisibility();
+
+
+            })
+            .catch((error) => {
+                console.error('Error adding data:', error);
+            });
+
+
+
+    }
+
+    const updatetask = async (title: string, current_status: string) => {
+
+        try {
+            const userdocref = doc(firestore, "tasks", title);
+
+            if (current_status === "Posted") {
+                await updateDoc(userdocref, {
+                    title: title,
+
+                    current_status: current_status,
+                    completed_by: arrayUnion(useremail),
+
+
+                });
+                alert("Task added successfully!");
+
+
+                return;
+
+            }
+
+            await updateDoc(userdocref, {
+                title: title,
+
+                current_status: current_status,
+                completed_by: arrayRemove(useremail),
+
+
+            });
+            alert("Task added successfully!");
+
+
+
+
+
+
+
+
+        } catch (error) {
+            alert("Error: " + error);
+            console.error(error);
+        }
+
+    }
+
+
+    const addToTask = ({ title, description, url, assigned_to }: taskprobs) => {
+        try {
+            const taskref = doc(firestore, "tasks", title);
+
+            setDoc(taskref, {
+
+                date: date,
+                createdon: new Date().toISOString().split('T')[0],
+                title: title,
+                smdoc: smDoc,
+                assigned_to: assigned_to,
+                deadline: Smdeadline,
+                description: description,
+                category: category,
+                platform: platform,
+                url: url,
+                img_url: imgUrl,
+                mention: mentionstring,
+                website_status: false,
+                remarks: remarks,
+
+
+                completed_by: [],
+                current_status: "Not Started",
+
+            }).then(() => {
+                console.log('Task added successfully!');
+            }
+            )
+
+        } catch (error) { }
+    }
+
+    const clearform = () => {
+        setDate("");
+        setTitle("");
+        setSmDoc("");
+        setUrl("");
+        setImgUrl("");
+        setDescription("");
+        setCategory("");
+        setPlatform("");
+        setRemarks("");
+        setMentions([]);
+
+
+    }
+
+
+
+    const deleteentry = () => {
+
+
+        if (!selectedEntry?.id) {
+            alert("No entry selected");
+            return;
+        }
+        const dataRef = ref(db, '/items/' + selectedEntry.id);
+        set(dataRef, null)
+            .then(() => {
+                alert('Data deleted successfully!');
+                clearform();
+                changeformvisibility();
+                //log entry can be added here
+            })
+            .catch((error) => {
+                console.error('Error deleting data:', error);
+            });
+    }
+
+
+    useEffect(() => {
+        if (selectedEntry) {
+            setDate(selectedEntry.date ? selectedEntry.date : "");
+            setTitle(selectedEntry.title ? selectedEntry.title : "");
+            setSmDoc(selectedEntry.smdoc ? selectedEntry.smdoc : "");
+            setUrl(selectedEntry.url ? selectedEntry.url : "");
+            setImgUrl(selectedEntry.img_url ? selectedEntry.img_url : "");
+            setDescription(selectedEntry.description ? selectedEntry.description : "");
+            setCategory(selectedEntry.category ? selectedEntry.category : "");
+            setPlatform(selectedEntry.platform ? selectedEntry.platform : "");
+            setRemarks(selectedEntry.remarks ? selectedEntry.remarks : "");
+
+            setSmDeadline(selectedEntry.deadline ? selectedEntry.deadline : "");
+
+            if (selectedEntry.mention) {
+                const mentionArray = selectedEntry.mention.split(",").map(item => item.trim());
+                setMentions(mentionArray);
+            }
+            if (selectedEntry.assigned_to) {
+                // const assignToArray = selectedEntry.assigned_to.split(",").map(item => item.trim());
+                setAssignTo(selectedEntry.assigned_to);
+            }
+        }
+    }, [selectedEntry]);
+
+
+
+    return (
+        <div className='w-full h-screen relative flex justify-center  ' >
+            <div className='absolute top-0 left-0 bg-black opacity-15 w-full h-full' onClick={changeformvisibility}></div>
+
+            <div className='absolute w-[90%] max-h-[80%] p-4 flex flex-col z-30 bg-white rounded-lg shadow-lg m-4 overflow-y-scroll ' >
+                <h1 className='w-full text-xl font-semibold text-gray-700'>View Item</h1>
+
+                <div className='w-full flex flex-col py-1 mt-4'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Date</label>
+                    <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
+                </div>
+
+                <div className='w-full flex flex-col py-1 mt-4'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Title</label>
+                    <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
+                </div>
+
+                <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
+                    <div className='w-full flex flex-col '>
+
+                        <label className='text-sm font-medium text-gray-600 px-2'>SM Correcton Doc</label>
+                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
+
+                    </div>
+
+                    {/* <div className='w-full flex flex-col '>
+
+                        <label className='text-sm font-medium text-gray-600 px-2'>Assign to</label>
+                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='assign' onChange={(e) => { setassign_to(e.target.value) }} value={assigned_to}>
+                        </input>
+                        <datalist id='assign'>
+                            {userlist.map((item, index) => (
+                                <option key={index} value={item}>{item}</option>
+                            ))}
+                        </datalist>
+                    </div> */}
+
+                    <div className='w-full flex flex-col '>
+                        <label className='text-sm font-medium text-gray-600 px-2'>Deadline</label>
+                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm text-red-600 ' type='date' onChange={(e) => { setSmDeadline(e.target.value) }} value={Smdeadline}></input>
+                    </div>
+
+                </div>
+
+                <div className='w-full flex flex-col py-1 mt-4'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Assigned to</label>
+                    {/* <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='assign' onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
+                            if (!assign_to.includes(e.currentTarget.value.trim())) {
+                                setAssignTo([...assign_to, e.currentTarget.value.trim()]);
+                                e.currentTarget.value = "";
+                            } else {
+                                e.currentTarget.value = "";
+                            }
+                        }
+                    }}  >
+                    </input>
+                    <datalist id='assign'>
+                        {userlist.map((item, index) => (
+                            <option key={index} value={item}>{item}</option>
+                        ))}
+                    </datalist> */}
+                    <div className={`text-xs text-gray-500 px-2 flex gap-2 mt-4 flex-wrap `}>
+                        {assign_to.map((item, index) => (
+                            <div className={`border-2 p-2 flex gap-2 rounded-2xl ${selectedEntry?.completed_by?.includes(item)?"bg-green-200":""} `} key={index}>
+                                <div>{item}</div>
+                                {/* <div className='cursor-pointer' onClick={() => setAssignTo(assign_to.filter((_, i) => i !== index))}
+                                >x</div> */}
+                            </div>
+                        ))}
+                    </div>
+
+
+                </div>
+
+
+
+                <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
+                    <div className='w-full flex flex-col '>
+
+                        <label className='text-sm font-medium text-gray-600 px-2'>URL</label>
+                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+                    </div>
+                    <div className='w-full flex flex-col '>
+
+                        <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
+                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+                    </div>
+
+                </div>
+
+
+                <div className='w-full flex flex-col py-1 mt-4'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
+                    <textarea className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                </div>
+
+
+                <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
+                    <div className='w-full flex flex-col '>
+
+                        <label className='text-sm font-medium text-gray-600 px-2'>Category</label>
+                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='category' onChange={(e) => { setCategory(e.target.value) }} value={category}>
+                        </input>
+                        {/* <datalist id='category'>
+                            {categorylist.map((item, index) => (
+                                <option key={index} value={item}>{item}</option>
+                            ))}
+                        </datalist> */}
+
+                    </div>
+                    <div className='w-full flex flex-col '>
+
+                        <label className='text-sm font-medium text-gray-600 px-2'>Platform</label>
+                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
+                        </input>
+                        <datalist id='platform'>
+                            {platformlist.map((item, index) => (
+                                <option key={index} value={item}>{item}</option>
+                            ))}
+                        </datalist>
+                    </div>
+
+                </div>
+
+                <div className='w-full flex flex-col py-1 mt-4'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Mentions</label>
+                    {/* <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
+                        if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
+                            if (!mentions.includes(e.currentTarget.value.trim())) {
+                                setMentions([...mentions, e.currentTarget.value.trim()]);
+                                e.currentTarget.value = "";
+                            } else {
+                                e.currentTarget.value = "";
+                            }
+                        }
+                    }}  >
+                    </input>
+                    <datalist id='mentions'>
+                        {mentionlist.map((item, index) => (
+                            <option key={index} value={item}>{item}</option>
+                        ))}
+                    </datalist> */}
+                    <div className='text-xs text-gray-500 px-2 flex gap-2 mt-4 flex-wrap'>
+                        {mentions.map((item, index) => (
+                            <div className='border-2 p-2 flex gap-2 rounded-2xl' key={index}>
+                                <div>{item}</div>
+                                <div className='cursor-pointer' onClick={() => setMentions(mentions.filter((_, i) => i !== index))}
+                                >x</div>
+                            </div>
+                        ))}
+                    </div>
+
+
+                </div>
+
+                <div className='w-full flex flex-col py-1 mt-4'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Remarks</label>
+                    <textarea className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setRemarks(e.target.value) }} value={remarks}></textarea>
+                </div>
+
+
+                <div className='w-full flex flex-col justify-center gap-4 py-1 mt-4  sm:flex-row'>
+                    <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { clearform(); changeformvisibility(); }}>Cancel</div>
+
+                    <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as("Working") }}>Mark as Pending</div>
+
+                    <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as('Posted') }}>Mark as Completed</div>
+                </div>
+
+
+
+
+            </div>
+
+            {/* <div className={`absolute top-0 left-0 w-full border-2 h-full justify-center  z-40 ${iscnfwindowopen ? 'flex' : 'hidden'}`}>
+                <div className='bg-black absolute top-0 right-0 w-full h-full z-41 opacity-35'></div>
+                <div className='bg-white p-4 absolute top-1/2 left-1/2 m-4 rounded-lg shadow-lg z-50 flex flex-col gap-4 -translate-x-1/2 -translate-y-1/2'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Enter your key</label>
+                    <p className='text-sm'> {username}, heads up for your permission on changing the database. This will be refected in the logs. write delete and click on confirm</p>
+                    <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm text-red-400' type='text' onChange={(e) => { setcnfkey(e.target.value) }} value={cnfkey}></input>
+                    <div className='w-full p-4 flex flex-row gap-4 justify-between'>
+                        <div className='px-4 text-center py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer' onClick={() => { setIscnfwindowopen(false) }}>Cancel</div>
+
+                        <div className='px-4 text-center py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer' onClick={() => { verifykey() }}>confirm</div>
+                    </div>
+
+                </div>
+            </div> */}
+
+        </div>
+    )
+}
+
+export default Viewdata
