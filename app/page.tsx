@@ -49,11 +49,13 @@ export default function Home() {
 
   const [useremail, setUseremail] = useState<string | null>("null");
   const [username, setUsername] = useState<string | null>("null");
+  
   useEffect(() => {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUseremail(user?.email ?? "No user signed in");
       setUsername(user?.displayName ?? "");
+     
     });
 
      Setitemcategories([])
