@@ -119,7 +119,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
             return;
 
         }
-        let current_completed_by_list = selectedEntry.completed_by;
+        const current_completed_by_list = selectedEntry.completed_by;
         current_completed_by_list?.push("sree@123")
         const dataRef = ref(db, '/items/' + selectedEntry?.id);
         const newdataRef = push(dataRef);
