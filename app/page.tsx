@@ -20,7 +20,7 @@ import Taskform from "./Components/Taskform";
 
 
 export default function Home() {
-  const { users, loading, refetch } = useUsers();
+  const { users } = useUsers();
   const user_email_list = users.map(user => user.email);
   const user_name_list = users.map(user => user.displayName);
 
@@ -56,12 +56,12 @@ export default function Home() {
       setUsername(user?.displayName ?? "");
     });
 
-    Setitemcategories([])
-    Setitems([])
-    Settasks([])
+     Setitemcategories([])
+     Setitems([])
+     Settasks([])
 
-    listenToItems(Setitems)
-    listenToTasks(Settasks)
+     listenToItems(Setitems)
+     listenToTasks(Settasks)
 
 
 
@@ -247,7 +247,7 @@ export default function Home() {
             </div>
 
 
-            <div className="w-full p-4 flex gap-4 justify-between ">
+            <div className="w-full p-4 flex gap-4 justify-between flex-wrap ">
               {itemcategories?.map((cat, index) => (
                 <div key={index} className="flex  gap-2  ">
                   <div className="flex flex-col  items-center justify-center p-4 bg-blue-100 rounded-xl shadow-md " onClick={() => { }}>

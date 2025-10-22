@@ -47,7 +47,7 @@ const Navbar = ({ current_page }: navprobes) => {
 
   return (
 
-    <div className=" flex h-full z-20 max-w-[15%] sm:w-[160px] min-h-[99vh] rounded-r-xl  flex-col bg-blue-500 text-white items-center ">
+    <div className=" flex h-full z-20  sm:w-[170px] min-h-[99vh] rounded-r-xl  flex-col bg-blue-500 text-white items-center ">
       <div className='flex items-center  py-2 justify-center mt-4 mb-4 w-full flex-col '>
         {/* <FcCalendar size={20} /> 
 
