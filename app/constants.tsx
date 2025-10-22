@@ -377,9 +377,9 @@ export function useUsers() {
     }
   }, []);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  // useEffect(() => {
+  //   fetchUsers();
+  // }, [fetchUsers]);
 
   return { users, loading, refetch: fetchUsers };
 }
