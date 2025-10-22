@@ -14,7 +14,7 @@ import Editform from '../Components/Editform';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 
-const page = () => {
+const Page = () => {
     const [entries, setEntries] = useState<itemprobes[]>([])
     const [currrentMonthEntries, setCurrentMonthEntries] = useState<itemprobes[]>([]);
     const [reg_users, setReg_users] = useState<any[]>([]);
@@ -358,4 +358,4 @@ const page = () => {
     )
 }
 
-export default page
+export default Page
