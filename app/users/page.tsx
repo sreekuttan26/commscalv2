@@ -14,7 +14,7 @@ type userprobs = {
     role?: string;
 }
 
-const page = () => {
+const Page = () => {
     const { users, loading, refetch } = useUsers();
 
     const [shownewuserform, setShownewuserform] = useState(false);
@@ -217,7 +217,7 @@ const page = () => {
     )
 }
 
-export default page
+export default Page
 
 
 

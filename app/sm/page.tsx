@@ -6,7 +6,7 @@ import {listenToItems, getRegistedUsers, getAllTasks, listenToTasks} from "../fi
 import { useState, useEffect } from 'react'
 import { itemprobes } from '../constants'
 
-const page = () => {
+const Page = () => {
 
   const[entries,setEntries]=useState<itemprobes[]>([])
   const [reg_users, setReg_users] = useState<any[]>([]);
@@ -40,4 +40,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

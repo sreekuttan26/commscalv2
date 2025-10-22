@@ -17,7 +17,7 @@ import Viewdata from '../Components/Viewdata';
 
 
 
-const page = () => {
+const Page = () => {
     const { users, loading } = useUsers();
     const [useremail, setUseremail] = useState<string | null>("null");
     const [iseditformopen, setIseditformopen] = useState(false);
@@ -407,4 +407,4 @@ const page = () => {
     )
 }
 
-export default page
+export default Page
