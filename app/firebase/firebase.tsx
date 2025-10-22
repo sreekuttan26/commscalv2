@@ -4,7 +4,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getDatabase, orderByChild, ref, query, get, onValue } from "firebase/database";
 import { collection, getDocs, getFirestore, onSnapshot } from "firebase/firestore";
-import { itemprobes } from "../constants";
+import { itemprobes, taskprobs } from "../constants";
 
 
 // TODO: Add SDKs for Firebase products that you want to use
@@ -113,13 +113,23 @@ const firebaseConfig = {
     }
   }
 
-  export const listenToTasks = (callback: (tasks: any[]) => void) => {
+  // export const listenToTasks = (callback: (tasks: taskprobs[]) => void) => {
+  // const tasksRef = collection(firestore, "tasks");
+  // return onSnapshot(tasksRef, (snapshot) => {
+  //   const tasks = snapshot.docs.map(doc => ({
+  //     id: doc.id,
+  //     ...doc.data()
+  //   }));
+  //   callback(tasks);
+  // });
+
+  export const listenToTasks = (callback: (tasks: taskprobs[]) => void) => {
   const tasksRef = collection(firestore, "tasks");
   return onSnapshot(tasksRef, (snapshot) => {
     const tasks = snapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data()
-    }));
+      ...(doc.data() as Record<string, unknown>)
+    })) as taskprobs[];
     callback(tasks);
   });
 };
