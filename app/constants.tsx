@@ -1,7 +1,7 @@
 'use client'
 import { collection, getDocs } from "firebase/firestore"
 import { firestore } from "./firebase/firebase"
-import { use, useEffect, useState } from "react"
+import { use, useCallback, useEffect, useState } from "react"
 
 
     
@@ -357,30 +357,25 @@ export const mentionlist = [
 
 
 
-  export function useUsers() {
+
+export function useUsers() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  
-
-
-    const fetchUsers = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(firestore, "reg_users"));
-        const users = querySnapshot.docs.map(doc => doc.data());
-        const usersArr = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setUsers(usersArr);
-        //  userlist.push(...users.map(user => user.email));
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
- 
+  const fetchUsers = useCallback(async () => {
+    try {
+      const querySnapshot = await getDocs(collection(firestore, "reg_users"));
+      const usersArr = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUsers(usersArr);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     fetchUsers();
@@ -388,6 +383,39 @@ export const mentionlist = [
 
   return { users, loading, refetch: fetchUsers };
 }
+
+
+//   export function useUsers() {
+//   const [users, setUsers] = useState<any[]>([]);
+//   const [loading, setLoading] = useState(true);
+
+  
+
+
+//     const fetchUsers = async () => {
+//       try {
+//         const querySnapshot = await getDocs(collection(firestore, "reg_users"));
+//         const users = querySnapshot.docs.map(doc => doc.data());
+//         const usersArr = querySnapshot.docs.map(doc => ({
+//           id: doc.id,
+//           ...doc.data()
+//         }));
+//         setUsers(usersArr);
+//         //  userlist.push(...users.map(user => user.email));
+//       } catch (error) {
+//         console.error("Error fetching users:", error);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+ 
+
+//   useEffect(() => {
+//     fetchUsers();
+//   }, [fetchUsers]);
+
+//   return { users, loading, refetch: fetchUsers };
+// }
 
 
 export const sheetupdateurl="https://script.google.com/macros/s/AKfycbwtSeFqApXZAzldCpwd86Dg4jlTP2-epuJ9KHtD6YYGfSvNLFyabUOEF7IDe3tI5SPUZA/exec";
