@@ -19,6 +19,9 @@ const Page = () => {
     const [currrentMonthEntries, setCurrentMonthEntries] = useState<itemprobes[]>([]);
     const [reg_users, setReg_users] = useState<any[]>([]);
 
+    const [notification_msg, setNotification_msg] = useState<string>("");
+    const [show_notification, setShow_notification] = useState<boolean>(false);
+
     useEffect(() => {
         listenToItems(setEntries)
 
@@ -120,7 +123,7 @@ const Page = () => {
     //         });
     // }
 
-    const updatedsmstatus = async (title: string, status: string, date:string) => {
+    const updatedsmstatus = async (title: string, status: string, date: string) => {
         const dataRef = ref(db, '/items/');
         const queryRef = query(dataRef, orderByChild('title'), equalTo(title));
         const snapshot = await get(queryRef);
@@ -174,7 +177,7 @@ const Page = () => {
     }, [currentDate]);
 
 
-    const updatetask = async (title: string, current_status: string, date:string) => {
+    const updatetask = async (title: string, current_status: string, date: string) => {
 
         try {
 
@@ -208,34 +211,44 @@ const Page = () => {
 
     }
 
-     const updateSheet =  (date:string, title:string, current_status:string) => {
-            const base = "https://script.google.com/macros/s/AKfycbzU4fJk30VytfQGqEuMWDXLxkNGuVL5jSz_ds2MFBXv3-uF3xRswLHX3eRfP9h1J-OAzA/exec"
-            const formattedDate = format(date, 'MMM yy');
-            const params = {
-                sheetname: formattedDate,
-                search: title,
-                updatevalue: current_status
-            }
-            const query = Object.entries(params)
-                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
-                .join('&');
-    
-            const fullUrl = `${base}?${query}`;
-    
-            console.log("Full URL:", fullUrl);
-    
-    
-            fetch(fullUrl).
-                then(res => res.text())
-                .then(response => {
-                    //alert("Resp:" + response);
-                })
-                .catch(error => {
-                   // alert("Error:" + error);
-                });
-    
+    const updateSheet = (date: string, title: string, current_status: string) => {
+        const base = "https://script.google.com/macros/s/AKfycbzU4fJk30VytfQGqEuMWDXLxkNGuVL5jSz_ds2MFBXv3-uF3xRswLHX3eRfP9h1J-OAzA/exec"
+        const formattedDate = format(date, 'MMM yy');
+        const params = {
+            sheetname: formattedDate,
+            search: title,
+            updatevalue: current_status
         }
-    
+        const query = Object.entries(params)
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
+            .join('&');
+
+        const fullUrl = `${base}?${query}`;
+
+        console.log("Full URL:", fullUrl);
+
+
+        fetch(fullUrl).
+            then(res => res.text())
+            .then(response => {
+                //alert("Resp:" + response);
+            })
+            .catch(error => {
+                // alert("Error:" + error);
+            });
+
+    }
+
+
+    const showToast = (message: string) => {
+        setNotification_msg(message);
+        setShow_notification(true);
+        setTimeout(() => {
+            setShow_notification(false);
+            setNotification_msg("");
+        }, 5000);
+    }
+
 
 
 
@@ -280,7 +293,7 @@ const Page = () => {
                                 <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title}</h2>
                                 <p className='w-[20%]   text-sm text-center whitespace-normal break-words max-h-[100px] overflow-clip '>{entry.mention}</p>
                                 <p className='w-[5%]  overflow-clip text-sm text-center'><input type='checkbox'></input></p>
-                                <p className='w-[15%]  overflow-clip text-sm text-center'><select className='bg-transparent focus:ring-0 focus:outline-0'  value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date)}>
+                                <p className='w-[15%]  overflow-clip text-sm text-center'><select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date)}>
                                     <option value="">Select</option>
                                     <option value="Working">Working</option>
                                     <option value="No Post">No Post</option>
@@ -335,13 +348,24 @@ const Page = () => {
 
                 </div>
                 <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: isdataformopen ? 'flex' : 'none' }}>
-                    <Dataform changeformvisibility={changeformvisibility} />
+                    <Dataform changeformvisibility={changeformvisibility}  showToast={showToast}/>
 
                 </div>
 
 
                 <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: iseditformopen ? 'flex' : 'none' }}>
-                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} />
+                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} />
+
+                </div>
+
+                {/* ------------------notification------------------------------------------------------------------------------ */}
+                <div className={`absolute top-0 right-0 m-4 p-4 rounded-2xl bg-white ${show_notification?"flex":"hidden"} border-2 border-blue-300 shadow-2xl flex-col justify-start z-20`}>
+                    <h1 className="font-semibold text-gray-700 ">Notification</h1>
+                    <div className='w-full flex 0 my-2'>
+                        <p>🔔</p>
+                        <p className="text-sm text-gray-500">{notification_msg}</p>
+                    </div>
+                    
 
                 </div>
 

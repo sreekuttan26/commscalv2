@@ -8,9 +8,10 @@ import { doc, setDoc } from 'firebase/firestore';
 type Props = {
 
     changeformvisibility: () => void,
+    showToast?: (message: string) => void,
 }
 
-const Dataform = ({ changeformvisibility }: Props) => {
+const Dataform = ({ changeformvisibility,showToast }: Props) => {
 
     const [mentions, setMentions] = useState<string[]>([]);
     const [assignedTo, setassign_to] = useState<string[]>([]);
@@ -59,6 +60,7 @@ const Dataform = ({ changeformvisibility }: Props) => {
         })
             .then(() => {
                 console.log('Data added successfully!');
+                showToast?showToast("Data added successfully!"):""
 
                 clearform();
             })
@@ -158,10 +160,11 @@ const Dataform = ({ changeformvisibility }: Props) => {
         fetch(fullUrl).
         then(res => res.text())
             .then(response => {
-                alert("Resp:" + response);
+                //alert("Resp:" + response);
+                showToast?showToast("Sheet status: "+response):""
             })
             .catch(error => {
-                alert("Error:"+ error);
+               showToast?showToast("Sheet Error: "+error):""
             });
 
     }

@@ -10,9 +10,10 @@ type Props = {
 
     changeformvisibility: () => void | null,
     selectedEntry?: itemprobes | null
+    showToast?: (message: string) => void
 }
 
-const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
+const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
@@ -75,7 +76,7 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
             smdoc: smDoc,
             assigned_to: assigned_to,
             deadline: deadline,
-            Description: description,
+            description: description,
             category: category,
             platform: platform,
             url: url,
@@ -112,8 +113,8 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
             setDeadline_error(true);
         } else { setDeadline_error(false); }
 
-        if (Smdeadline < date) {
-            alert("Deadline cannot be before the date of publication");
+        if (Smdeadline < date && assign_to.length > 0) {
+            alert("Deadline is not valid");
             return;
         }
 
@@ -181,42 +182,56 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
         } catch (error) { }
     }
 
-    const update_Sheet = (date: string, title: string, current_status: string) => {
+    const update_Sheet =  (date: string, title: string, current_status: string) => {
         const base = sheetupdateurl
-        const formattedDate = format(date, 'MMM yy'); //date as month year
-        const formated_date = date.split("-").reverse().join("/"); //data date
-        const params = {
-            date: formated_date,
-            title: title,
-            smdoc: smDoc,
-            desc: description,
-            cat: category,
-            platform: platform,
-            url: url,
-            img_url: imgUrl,
-            mention: mentionstring,
-            remarks: remarks,
-            smstatus: sm_status,
-            assignto: assign_to.join(", "),
-        }
-        const query = Object.entries(params)
-            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
-            .join('&');
+        
+            const formattedDate = format(date, 'MMM yy'); //date as month year
+            const formated_date = date.split("-").reverse().join("/"); //data date
+            const params = {
+                date: formated_date,
+                title: title,
+                smdoc: smDoc,
+                desc: description,
+                cat: category,
+                platform: platform,
+                url: url,
+                img_url: imgUrl,
+                mention: mentionstring,
+                remarks: remarks,
+                smstatus: sm_status,
+                assignto: assign_to.join(", "),
+            }
+            const query = Object.entries(params)
+                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
+                .join('&');
 
-        const fullUrl = `${base}?${query}`;
+            const fullUrl = `${base}?${query}`;
 
-        console.log("Full URL:", fullUrl);
+            console.log("Full URL:", fullUrl);
 
 
-        fetch(fullUrl).
-            then(res => res.text())
-            .then(response => {
-                //alert("Resp:" + response);
-            })
-            .catch(error => {
-                //alert("Error:" + error);
-            });
+            fetch(fullUrl).
+                then(res => res.text())
+                .then(response => {
 
+                   showToast ? showToast("Sheet updated successfully") :""
+                    //alert("Resp:" + response);
+                })
+                .catch(error => {
+                    alert("Error:" + error);
+                });
+        //     const res = await fetch(sheetupdateurl, {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/json",
+        //         },
+        //         body: JSON.stringify(params),
+        //     });
+
+        //     if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        //     const text = await res.text();
+        //     alert("Resp: " + text);
+        // } 
     }
 
     const clearform = () => {
@@ -488,7 +503,7 @@ const Editform = ({ changeformvisibility, selectedEntry }: Props) => {
 
 
                 <div className='w-full flex flex-col justify-center gap-4 py-1 mt-4  sm:flex-row'>
-                    <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { clearform(); changeformvisibility(); }}>Cancel</div>
+                    <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => {  changeformvisibility(); }}>Cancel</div>
 
                     <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { setIscnfwindowopen(true) }}>Delete</div>
 
