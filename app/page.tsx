@@ -103,7 +103,7 @@ export default function Home() {
     }
     if (current_task_user.length <= 3 && current_task_status.length <= 3) {
       Setfiltered_tasks(
-         [...(tasks ?? [])].sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()))
+         [...(tasks ?? [])].sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).filter((task=>(task.assigned_to.length>0))))
         //[...(tasks ?? [])].reverse()
         // [...(tasks ?? [])].sort(
         //   (a, b) =>
