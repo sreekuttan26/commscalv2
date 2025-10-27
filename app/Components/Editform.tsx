@@ -54,6 +54,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
     const [date_error, setDate_error] = useState<boolean>(false);
     const [categorry_error, setCategory_error] = useState<boolean>(false);
     const [deadline_error, setDeadline_error] = useState<boolean>(false);
+     const [url_error, seturl_error]=useState<boolean>(false);
 
 
 
@@ -117,10 +118,17 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
             alert("Deadline is not valid");
             return;
         }
+         if(url==""){
+                seturl_error(true);
+            }
+            else{
+                seturl_error(false);
+            }
 
 
 
-        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "")) {
+
+        if (date == "" || title == "" || category == "" || (assign_to.length > 0 && Smdeadline == "") || url=="") {
             alert("Please fill all the required fields");
             return;
         }
@@ -421,7 +429,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>URL</label>
-                        <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+                        <input className={`p-2 border-2 ${url_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                     </div>
                     <div className='w-full flex flex-col '>
 
