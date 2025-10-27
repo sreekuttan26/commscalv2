@@ -61,7 +61,8 @@ export type itemprobes = {
     mention: string,
     remarks: string,
     id?: string,
-    assigned_to?: string
+    assigned_to?: string,
+    wtw_status?:boolean
 }
 
 export const categorylist = [
@@ -421,6 +422,7 @@ export function useUsers() {
 
 export const sheetupdateurl="https://script.google.com/macros/s/AKfycbwtSeFqApXZAzldCpwd86Dg4jlTP2-epuJ9KHtD6YYGfSvNLFyabUOEF7IDe3tI5SPUZA/exec";
 export const delete_sheet_row_url="https://script.google.com/macros/s/AKfycbxQbhvBoDQvwGWIh7e6kjYpXCIMjFCUalH2TZtp01uNcgORwrGzyCofajJfyg2eGbcA/exec";
+export const updatewtwsheet_url="https://script.google.com/macros/s/AKfycbwNqfUAawsMv-BoRB9DyYeDWudnh230I8bO_7Odn37MyNzD9RRsRVUN0L1rDm0r9TkD0A/exec";
 
 
 

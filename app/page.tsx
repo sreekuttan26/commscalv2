@@ -115,25 +115,27 @@ export default function Home() {
 
     }
 
-    if (current_task_status.length <= 3) {
-      Setfiltered_tasks(tasks?.filter((task => (task.assigned_to?.includes(current_task_user)))))
+    // for filter options -- not using for now
 
-      return;
+    // if (current_task_status.length <= 3) {
+    //   Setfiltered_tasks(tasks?.filter((task => (task.assigned_to?.includes(current_task_user)))))
+
+    //   return;
 
 
-    }
+    // }
 
-    if (current_task_status === 'Posted') {
-      Setfiltered_tasks(tasks?.filter((task => (
-        task.completed_by?.includes(current_task_user) && task.assigned_to?.includes(current_task_user)))))
+    // if (current_task_status === 'Posted') {
+    //   Setfiltered_tasks(tasks?.filter((task => (
+    //     task.completed_by?.includes(current_task_user) && task.assigned_to?.includes(current_task_user)))))
 
-    }
+    // }
 
-    if (current_task_status === 'Working') {
-      Setfiltered_tasks(tasks?.filter((task => (
-        !task.completed_by?.includes(current_task_user) && task.assigned_to?.includes(current_task_user)))))
+    // if (current_task_status === 'Working') {
+    //   Setfiltered_tasks(tasks?.filter((task => (
+    //     !task.completed_by?.includes(current_task_user) && task.assigned_to?.includes(current_task_user)))))
 
-    }
+    // }
 
 
 

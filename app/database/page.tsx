@@ -7,7 +7,7 @@ import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
 import { db, firestore, getRegistedUsers, listenToItems } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
-import { itemprobes, taskprobs } from '../constants';
+import { itemprobes, taskprobs, updatewtwsheet_url } from '../constants';
 import Dataform from '../Components/Dataform';
 import { format } from 'date-fns';
 import Editform from '../Components/Editform';
@@ -21,6 +21,8 @@ const Page = () => {
 
     const [notification_msg, setNotification_msg] = useState<string>("");
     const [show_notification, setShow_notification] = useState<boolean>(false);
+
+    const[wtw_status, setwtw_status]=useState<boolean>(true);
 
     useEffect(() => {
         listenToItems(setEntries)
@@ -148,6 +150,63 @@ const Page = () => {
         }
         updateSheet(date, title, status);
 
+
+    }
+
+
+     const updatedwtw_status = async (title: string, status: boolean, date: string) => {
+        const dataRef = ref(db, '/items/');
+        const queryRef = query(dataRef, orderByChild('title'), equalTo(title));
+        const snapshot = await get(queryRef);
+
+        if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+                const key = childSnapshot.key;
+                const updates: Record<string, any> = {};
+                updates[`items/${key}/wtw_status`] = status;
+
+                update(ref(db), updates)
+                    .then(() => {
+                        console.log('wtw_status updated successfully!');
+                        //get_from_db();
+                       
+
+                    })
+                    .catch((error) => {
+                        console.error('Error updating wtw_status:', error);
+                    });
+            });
+        }
+        updateSheetwtw(date, title, status);
+
+
+    }
+
+     const updateSheetwtw = (date: string, title: string, current_status: boolean) => {
+        
+        const formattedDate = format(date, 'MMM yy');
+        const params = {
+            sheetname: formattedDate,
+            search: title,
+            updatevalue: current_status
+        }
+        const query = Object.entries(params)
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
+            .join('&');
+
+        const fullUrl = `${updatewtwsheet_url}?${query}`;
+
+        console.log("Full URL:", fullUrl);
+
+
+        fetch(fullUrl).
+            then(res => res.text())
+            .then(response => {
+                //alert("Resp:" + response);
+            })
+            .catch(error => {
+                // alert("Error:" + error);
+            });
 
     }
 
@@ -292,7 +351,8 @@ const Page = () => {
 
                                 <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title}</h2>
                                 <p className='w-[20%]   text-sm text-center whitespace-normal break-words max-h-[100px] overflow-clip '>{entry.mention}</p>
-                                <p className='w-[5%]  overflow-clip text-sm text-center'><input type='checkbox'></input></p>
+                                <p className='w-[5%]  overflow-clip text-sm text-center'>
+                                    <input type='checkbox' checked={entry.wtw_status?entry.wtw_status:false} onChange={(e) =>updatedwtw_status(entry.title,e.target.checked,entry.date)} /></p>
                                 <p className='w-[15%]  overflow-clip text-sm text-center'><select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date)}>
                                     <option value="">Select</option>
                                     <option value="Working">Working</option>
