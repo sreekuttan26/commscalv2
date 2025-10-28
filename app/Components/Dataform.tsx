@@ -132,6 +132,7 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
         setPlatform("");
         setRemarks("");
         setMentions([]);
+        setassign_to([]);
 
         setDate_error(false);
         setTitle_error(false);
