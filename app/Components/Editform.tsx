@@ -441,7 +441,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
-                        <label className='text-sm font-medium text-gray-600 px-2'>URL</label>
+                        <label className='text-sm font-medium text-gray-600 px-2' ><a href={url} target="_blank">URL 🔗</a></label>
                         <input className={`p-2 border-2 ${url_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                     </div>
                     <div className='w-full flex flex-col '>
