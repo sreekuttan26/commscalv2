@@ -103,7 +103,7 @@ export default function Home() {
     }
     if (current_task_user.length <= 3 && current_task_status.length <= 3) {
       Setfiltered_tasks(
-         [...(tasks ?? [])].sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).filter((task=>(task.assigned_to.length>0))))
+         [...(tasks ?? [])].sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).filter((task=>(task.assigned_to.length>0))))       
         //[...(tasks ?? [])].reverse()
         // [...(tasks ?? [])].sort(
         //   (a, b) =>
@@ -121,7 +121,6 @@ export default function Home() {
     //   Setfiltered_tasks(tasks?.filter((task => (task.assigned_to?.includes(current_task_user)))))
 
     //   return;
-
 
     // }
 
@@ -144,25 +143,25 @@ export default function Home() {
 
 
 
-    // Setfiltered_tasks(
-    //   tasks?.filter((task) => {
-    //     const matchUser =
-    //       current_task_user.length <= 3 ||
-    //       (
-    //       task.assigned_to?.includes(current_task_user) &&
-    //       !task.completed_by?.includes(current_task_user));
+    Setfiltered_tasks(
+      tasks?.filter((task) => {
+        const matchUser =
+          current_task_user.length <= 3 ||
+          (
+          task.assigned_to?.includes(current_task_user) &&
+          !task.completed_by?.includes(current_task_user));
 
-    //     const matchStatus =
-    //       current_task_status.length <= 3 ||
-    //       (task.assigned_to?.includes(current_task_user) &&
-    //       !task.completed_by?.includes(current_task_user));
+        const matchStatus =
+          current_task_status.length <= 3 ||
+          (task.assigned_to?.includes(current_task_user) &&
+          !task.completed_by?.includes(current_task_user));
 
-    //       console.log('matchUser= '+matchUser)
-    //       console.log('matchstatus '+matchStatus)
+          console.log('matchUser= '+matchUser)
+          console.log('matchstatus '+matchStatus)
 
-    //     return matchUser && matchStatus;
-    //   })
-    // );
+        return matchUser && matchStatus;
+      })
+    );
 
   };
   const addToTask = ({ date, deadline, title, description, url, assigned_to }: taskprobs) => {
