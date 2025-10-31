@@ -55,6 +55,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
     const [categorry_error, setCategory_error] = useState<boolean>(false);
     const [deadline_error, setDeadline_error] = useState<boolean>(false);
      const [url_error, seturl_error]=useState<boolean>(false);
+        const [isshowcopy,setIsshowcopy]=useState<boolean>(false);
 
 
 
@@ -346,6 +347,18 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
         }
     }, [selectedEntry]);
 
+    const copy_mentions_clipboard = (mentionstring: string) => {
+        navigator.clipboard.writeText(mentionstring).then(() => {
+            //alert("Mentions copied to clipboard");
+            setIsshowcopy(true);
+            setTimeout(() => {
+                setIsshowcopy(false);
+            }, 2000);
+        }).catch((err) => {
+            alert("Failed to copy mentions: " + err);
+        });
+    }
+
 
 
     return (
@@ -474,7 +487,11 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
-                    <label className='text-sm font-medium text-gray-600 px-2'>Mentions</label>
+                    <div className='flex flex-row gap-4 items-center'>
+                        <label className='text-sm font-medium text-gray-600 px-2 cursor-copy' onClick={()=>{copy_mentions_clipboard(mentionstring)}}>Mentions ⧉ </label>
+                          <div className={`${isshowcopy?"flex":"hidden"} text-sm text-green-700`}>Copied</div>
+                    </div>
+                    
                     <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
                         if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
                             if (!mentions.includes(e.currentTarget.value.trim())) {
@@ -542,6 +559,6 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
 
         </div>
     )
-}
+} 
 
 export default Editform
