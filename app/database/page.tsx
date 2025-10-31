@@ -64,6 +64,7 @@ const Page = () => {
         setIseditformopen(!iseditformopen);
 
         if (entry) {
+            
             setSelectedEntry(entry);
         }
 

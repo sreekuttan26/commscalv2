@@ -19,6 +19,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
 
     const [username, setUsername] = useState<string | null>("null");
     useEffect(() => {
+        clearform();
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUsername(user?.displayName ?? "Login");
         });
@@ -341,8 +342,11 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
                 setMentions(mentionArray);
             }
             if (selectedEntry.assigned_to) {
+                 
                 const assignToArray = selectedEntry.assigned_to.split(",").map(item => item.trim());
                 setAssignTo(assignToArray);
+            }else{
+                setAssignTo([]);
             }
         }
     }, [selectedEntry]);
@@ -441,7 +445,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
-                        <label className='text-sm font-medium text-gray-600 px-2' ><a href={url} target="_blank">URL 🔗</a></label>
+                        <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${url.includes("http")?"flex":"hidden"}`} href={url} target="_blank">URL 🔗</a> <p className={`${url.includes("http")?"hidden":"flex"}`}>URL</p></label>
                         <input className={`p-2 border-2 ${url_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                     </div>
                     <div className='w-full flex flex-col '>
