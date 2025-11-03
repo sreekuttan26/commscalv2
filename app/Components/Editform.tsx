@@ -58,6 +58,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
      const [url_error, seturl_error]=useState<boolean>(false);
         const [isshowcopy,setIsshowcopy]=useState<boolean>(false);
 
+        const [click, setClick]=useState<boolean>(false);
+
 
 
     useEffect(() => {
@@ -91,7 +93,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
             .then(() => {
                 console.log('Data added successfully!');
                 addToTask({ title, description, url, assigned_to: assign_to, createdon: new Date().toISOString().split('T')[0] })
-                clearform();
+               // clearform();
+                
             })
             .catch((error) => {
                 console.error('Error adding data:', error);
@@ -154,6 +157,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
         update_Sheet(date, title, sm_status);
 
         changeformvisibility();
+        setClick(!click);
 
     }
 
@@ -242,6 +246,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
         //     const text = await res.text();
         //     alert("Resp: " + text);
         // } 
+          setClick(!click);
     }
 
     const clearform = () => {
@@ -349,7 +354,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
                 setAssignTo([]);
             }
         }
-    }, [selectedEntry]);
+    }, [selectedEntry, click]);
 
     const copy_mentions_clipboard = (mentionstring: string) => {
         navigator.clipboard.writeText(mentionstring).then(() => {
