@@ -5,6 +5,7 @@ import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } fr
 import { add } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
 import { arrayRemove, arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 type Props = {
 
@@ -54,7 +55,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
         setMentionstring(mentions.join(", "));
         setassigned_toString(assign_to.join(", "));
-        console.log(date);
+        //console.log(date);
 
     }, [mentions, date, title, smDoc, url, imgUrl, description, category, platform, remarks]);
 
@@ -78,7 +79,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
         })
             .then(() => {
-                console.log('Data added successfully!');
+                //console.log('Data added successfully!');
                 addToTask({ title, description, url, assigned_to: assign_to, createdon: new Date().toISOString().split('T')[0] })
                 clearform();
             })
@@ -120,7 +121,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
         }
         const current_completed_by_list = selectedEntry.completed_by;
-        current_completed_by_list?.push("sree@123")
+        //current_completed_by_list?.push("")
         const dataRef = ref(db, '/items/' + selectedEntry?.id);
         const newdataRef = push(dataRef);
         update(dataRef, {
@@ -132,7 +133,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
         })
             .then(() => {
-                console.log('Data added successfully!');
+                //console.log('Data added successfully!');
                 clearform();
                 updatetask(title, value)
 
@@ -149,6 +150,8 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
     }
 
     const updatetask = async (title: string, current_status: string) => {
+        console.log("assigned to 0= " + selectedEntry?.assigned_to?.length)
+        console.log("completed by 0= " + selectedEntry?.completed_by?.length);
 
         try {
             const userdocref = doc(firestore, "tasks", title);
@@ -162,7 +165,16 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
 
                 });
+
+
                 alert("Task added successfully!");
+                console.log("assigned to= " + selectedEntry?.assigned_to)
+                console.log("complted by= " + selectedEntry?.completed_by)
+                if ((selectedEntry?.assigned_to?.length ?? 0) === ((selectedEntry?.completed_by?.length ?? 0)+1)) {
+                     updatedsmstatus(title,current_status,selectedEntry?.date??"");
+                    return;
+
+                }
 
 
                 return;
@@ -178,6 +190,8 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
             });
             alert("Task added successfully!");
+
+            updatedsmstatus(title, current_status, selectedEntry?.date ?? "");
 
 
 
@@ -220,7 +234,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
                 current_status: "Not Started",
 
             }).then(() => {
-                console.log('Task added successfully!');
+                //console.log('Task added successfully!');
             }
             )
 
@@ -290,6 +304,65 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
         }
     }, [selectedEntry]);
 
+    const updatedsmstatus = async (title: string, status: string, date: string) => {
+        console.log("upadting sm = " + status)
+        const dataRef = ref(db, '/items/');
+        const queryRef = query(dataRef, orderByChild('title'), equalTo(title));
+        const snapshot = await get(queryRef);
+
+        if (snapshot.exists()) {
+            snapshot.forEach((childSnapshot) => {
+                const key = childSnapshot.key;
+                const updates: Record<string, any> = {};
+                updates[`items/${key}/sm_status`] = status;
+
+                update(ref(db), updates)
+                    .then(() => {
+                        //console.log('sm_status updated successfully!');
+                        //get_from_db();
+
+
+
+                    })
+                    .catch((error) => {
+                        console.error('Error updating sm_status:', error);
+                    });
+            });
+        }
+        updateSheet(date, title, status);
+
+
+
+    }
+    const updateSheet = (date: string, title: string, current_status: string) => {
+        //console.log("updating sheet for posted")
+        const base = "https://script.google.com/macros/s/AKfycbzU4fJk30VytfQGqEuMWDXLxkNGuVL5jSz_ds2MFBXv3-uF3xRswLHX3eRfP9h1J-OAzA/exec"
+        const formattedDate = format(date, 'MMM yy');
+        const params = {
+            sheetname: formattedDate,
+            search: title,
+            updatevalue: current_status
+        }
+        const query = Object.entries(params)
+            .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
+            .join('&');
+
+        const fullUrl = `${base}?${query}`;
+
+        //console.log("Full URL:", fullUrl);
+
+
+        fetch(fullUrl).
+            then(res => res.text())
+            .then(response => {
+                alert("Resp:" + response);
+            })
+            .catch(error => {
+                // alert("Error:" + error);
+            });
+
+    }
+
 
 
     return (
@@ -356,7 +429,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
                     </datalist> */}
                     <div className={`text-xs text-gray-500 px-2 flex gap-2 mt-4 flex-wrap `}>
                         {assign_to.map((item, index) => (
-                            <div className={`border-2 p-2 flex gap-2 rounded-2xl ${selectedEntry?.completed_by?.includes(item)?"bg-green-200":""} `} key={index}>
+                            <div className={`border-2 p-2 flex gap-2 rounded-2xl ${selectedEntry?.completed_by?.includes(item) ? "bg-green-200" : ""} `} key={index}>
                                 <div>{item}</div>
                                 {/* <div className='cursor-pointer' onClick={() => setAssignTo(assign_to.filter((_, i) => i !== index))}
                                 >x</div> */}

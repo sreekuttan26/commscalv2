@@ -5,6 +5,7 @@ import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } fr
 import { add } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { format } from 'date-fns';
 
 type Props = {
 
@@ -56,7 +57,7 @@ const Taskform = ({ changeformvisibility, selectedEntry }: Props) => {
         setMentionstring(mentions.join(", "));
         setassigned_toString(assign_to.join(", "));
        
-        console.log(date);
+        //console.log(date);
 
     }, [mentions,assign_to, date, title, smDoc, url, imgUrl, description, category, platform, remarks]);
 
@@ -119,7 +120,7 @@ const Taskform = ({ changeformvisibility, selectedEntry }: Props) => {
                 current_status: sm_status,               
                
             }).then(() => {
-                console.log('Task added successfully!');
+                //console.log('Task added successfully!');
             }
             )
 
@@ -183,7 +184,7 @@ const Taskform = ({ changeformvisibility, selectedEntry }: Props) => {
     useEffect(() => {
         if (selectedEntry) {
 
-            console.log("Selected entry data=");
+            //console.log("Selected entry data=");
 
             setDate(selectedEntry.date ? selectedEntry.date : "");
             setTitle(selectedEntry.title ? selectedEntry.title : "");
@@ -208,6 +209,9 @@ const Taskform = ({ changeformvisibility, selectedEntry }: Props) => {
             }
         }
     }, [selectedEntry]);
+
+
+    
 
 
 

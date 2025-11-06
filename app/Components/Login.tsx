@@ -32,8 +32,8 @@ const Login = () => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
 
-            console.log("Authorized users:", userlist);
-            console.log("Current user email:", user?.email);
+            //console.log("Authorized users:", userlist);
+            //console.log("Current user email:", user?.email);
 
             if (userlist.includes(user?.email ? user.email : "")) {
                 setUsername(user?.displayName ?? "Login");

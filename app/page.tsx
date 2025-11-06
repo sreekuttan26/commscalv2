@@ -95,7 +95,7 @@ export default function Home() {
 
     let task_user_selected = '';
     const task_status_selected = '';
-    console.log('current_task_status=' + current_task_status)
+    //console.log('current_task_status=' + current_task_status)
 
     if (current_task_user.length >= 3) {
       task_user_selected = current_task_user
@@ -156,8 +156,8 @@ export default function Home() {
           (task.assigned_to?.includes(current_task_user) &&
           !task.completed_by?.includes(current_task_user));
 
-          console.log('matchUser= '+matchUser)
-          console.log('matchstatus '+matchStatus)
+          //console.log('matchUser= '+matchUser)
+          //console.log('matchstatus '+matchStatus)
 
         return matchUser && matchStatus;
       })

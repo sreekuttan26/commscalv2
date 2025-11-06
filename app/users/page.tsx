@@ -32,7 +32,7 @@ const Page = () => {
     const register_user = async ({ email, displayname, role }: userprobs) => {
         const userdocref = doc(firestore, "reg_users", email);
         try {
-            console.log("Register button clicked");
+            //console.log("Register button clicked");
             const userdocref = doc(firestore, "reg_users", email);
             await setDoc(userdocref, {
                 email: email,

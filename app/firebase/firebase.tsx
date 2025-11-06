@@ -45,7 +45,7 @@ const firebaseConfig = {
           })          
 
         }else{
-          console.log("No data available");
+          //console.log("No data available");
         }
     })
   }

@@ -67,7 +67,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
         setMentionstring(mentions.join(", "));
         setassigned_toString(assign_to.join(", "));
 
-        console.log(date);
+        //console.log(date);
 
     }, [mentions, assign_to, date, title, smDoc, url, imgUrl, description, category, platform, remarks]);
 
@@ -91,7 +91,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
 
         })
             .then(() => {
-                console.log('Data added successfully!');
+                //console.log('Data added successfully!');
                 addToTask({ title, description, url, assigned_to: assign_to, createdon: new Date().toISOString().split('T')[0] })
                // clearform();
                 
@@ -189,7 +189,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
                 current_status: sm_status,
 
             }).then(() => {
-                console.log('Task added successfully!');
+                //console.log('Task added successfully!');
             }
             )
 
@@ -221,7 +221,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
 
             const fullUrl = `${base}?${query}`;
 
-            console.log("Full URL:", fullUrl);
+            //console.log("Full URL:", fullUrl);
 
 
             fetch(fullUrl).
@@ -327,7 +327,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
     useEffect(() => {
         if (selectedEntry) {
 
-            console.log("Selected entry data=");
+            //console.log("Selected entry data=");
 
             setDate(selectedEntry.date ? selectedEntry.date : "");
             setTitle(selectedEntry.title ? selectedEntry.title : "");

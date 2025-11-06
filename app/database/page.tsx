@@ -139,7 +139,7 @@ const Page = () => {
 
                 update(ref(db), updates)
                     .then(() => {
-                        console.log('sm_status updated successfully!');
+                        //console.log('sm_status updated successfully!');
                         //get_from_db();
                         updatetask(title, status, date)
 
@@ -168,7 +168,7 @@ const Page = () => {
 
                 update(ref(db), updates)
                     .then(() => {
-                        console.log('wtw_status updated successfully!');
+                        //console.log('wtw_status updated successfully!');
                         //get_from_db();
                        
 
@@ -197,7 +197,7 @@ const Page = () => {
 
         const fullUrl = `${updatewtwsheet_url}?${query}`;
 
-        console.log("Full URL:", fullUrl);
+        //console.log("Full URL:", fullUrl);
 
 
         fetch(fullUrl).
@@ -285,7 +285,7 @@ const Page = () => {
 
         const fullUrl = `${base}?${query}`;
 
-        console.log("Full URL:", fullUrl);
+        //console.log("Full URL:", fullUrl);
 
 
         fetch(fullUrl).

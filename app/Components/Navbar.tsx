@@ -16,8 +16,8 @@ const Navbar = ({ current_page }: navprobes) => {
   const userlist = users.map(user => user.email);
   const [isadmin, setisadmin] = useState<boolean>(false);
 
-  console.log("User list in Navbar:", userlist);
-  console.log("admin status:", isadmin);
+  //console.log("User list in Navbar:", userlist);
+  //console.log("admin status:", isadmin);
 
 
 
@@ -42,7 +42,7 @@ const Navbar = ({ current_page }: navprobes) => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      console.log("User signed out.");
+      //console.log("User signed out.");
     } catch (error) {
       console.error("Error signing out:", error);
     }

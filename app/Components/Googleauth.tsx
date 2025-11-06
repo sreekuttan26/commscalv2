@@ -17,7 +17,7 @@ const Googleauth = () => {
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setSignedInUser(user);
-            console.log('Signed in user:', user);
+            //console.log('Signed in user:', user);
         });
         return () => unsubscribe();
     }, []);
@@ -25,19 +25,19 @@ const Googleauth = () => {
     const provider = new GoogleAuthProvider();
 
     const signInWithGoogle = async () => {
-        console.log("Signing in with Google...");
+        //console.log("Signing in with Google...");
         try {
             await signInWithPopup(auth, provider);
             const user = auth.currentUser;
             setSignedInUser(user);
 
             if (user) {
-                console.log("User Info:", {
-                    displayName: user.displayName,
-                    email: user.email,
-                    photoURL: user.photoURL,
-                    uid: user.uid,
-                });
+                // //console.log("User Info:", {
+                //     displayName: user.displayName,
+                //     email: user.email,
+                //     photoURL: user.photoURL,
+                //     uid: user.uid,
+                // });
 
                 // use uid as document id (fallback to email if uid missing)
                 const id = user.uid ?? user.email ?? '';
@@ -45,7 +45,7 @@ const Googleauth = () => {
                 const userdoc = await getDoc(userdocref);
 
                 if (userdoc.exists()) {
-                    console.log("User document data:", userdoc.data());
+                    //console.log("User document data:", userdoc.data());
                 } else {
                     await setDoc(userdocref, {
                         email: user.email,
@@ -54,10 +54,10 @@ const Googleauth = () => {
                         uid: user.uid,
                         createdAt: new Date()
                     });
-                    console.log("Created user document:", id);
+                    //console.log("Created user document:", id);
                 }
             } else {
-                console.log("No user is signed in.");
+                //console.log("No user is signed in.");
             }
         } catch (error) {
             console.error("Error signing in with Google:", error);
@@ -109,7 +109,7 @@ export default Googleauth;
 
 //         onAuthStateChanged(auth,(user)=>{
 //             setSignedinuser(user);
-//             console.log("Signed in user:",user);
+//             //console.log("Signed in user:",user);
 //         }
 //     )),[onAuthStateChanged]);
 
@@ -119,14 +119,14 @@ export default Googleauth;
     
 
 //     const signInWithGoogle = async () => {
-//         console.log("Signing in with Google...");
+//         //console.log("Signing in with Google...");
 //         try{
 //             await signInWithPopup(auth, provider);
 //           const  user= auth.currentUser;
 //           setSignedinuser(user);
 
 //             if (user) {
-//                 console.log("User Info:", {
+//                 //console.log("User Info:", {
 //                     displayName: user.displayName,
 //                     email: user.email,
 //                     photoURL: user.photoURL,
@@ -135,14 +135,14 @@ export default Googleauth;
 //                 const userdocref=doc(firestore,"users",user.email?user.email:"");
 //                 const userdoc=await getDoc(userdocref);
 //                 if(userdoc.exists()){
-//                     console.log("User document data:", userdoc.data());
-//                      console.log("No such document!");
+//                     //console.log("User document data:", userdoc.data());
+//                      //console.log("No such document!");
                    
                
 //                 }else{
                     
-//                     console.log("User document data:", userdoc.data());
-//                     console.log("No such document!");
+//                     //console.log("User document data:", userdoc.data());
+//                     //console.log("No such document!");
 //                     await setDoc(userdocref,{
 //                         email:user.email,
 //                         displayName:user.displayName,  
@@ -152,7 +152,7 @@ export default Googleauth;
 //                 })
 //                 }
 //             }else{
-//                 console.log("No user is signed in.");
+//                 //console.log("No user is signed in.");
 //             }
 
             

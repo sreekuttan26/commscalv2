@@ -5,7 +5,7 @@ import Rightcontainer from '../Components/Rightcontainer'
 import { FaHourglassHalf } from "react-icons/fa";
 import { MdDone } from "react-icons/md";
 import { MdAlignHorizontalLeft } from "react-icons/md";
-import { get, orderByChild, query, ref } from 'firebase/database';
+import { equalTo, get, orderByChild, query, ref, update } from 'firebase/database';
 import { auth, db, listenToTasks } from '../firebase/firebase';
 import { itemprobes, taskprobs, useUsers } from '../constants';
 import { format } from 'date-fns';
@@ -72,7 +72,7 @@ const Page = () => {
 
 
     const setcurrentcategory = (category: string) => {
-        console.log(category);
+        //console.log(category);
         setCurrentcategory(category);
     }
 
@@ -121,6 +121,8 @@ const Page = () => {
             setSelectedEntry(entry);
         }
     }
+
+    
 
 
 

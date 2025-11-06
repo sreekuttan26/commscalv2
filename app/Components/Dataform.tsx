@@ -37,7 +37,7 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
     useEffect(() => {
 
         setMentionstring(mentions.join(", "));
-        console.log(date);
+        //console.log(date);
 
     }, [mentions, date, title, smDoc, url, imgUrl, description, category, platform, remarks]);
 
@@ -60,7 +60,7 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
             website_status: website_status
         })
             .then(() => {
-                console.log('Data added successfully!');
+                //console.log('Data added successfully!');
                 showToast?showToast("Data added successfully!"):""
 
                 clearform();
@@ -161,7 +161,7 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
 
         const fullUrl = `${base}?${query}`;
 
-        console.log("Full URL:", fullUrl);
+        //console.log("Full URL:", fullUrl);
 
 
 
