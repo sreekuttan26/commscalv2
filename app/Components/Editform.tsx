@@ -45,6 +45,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
     const [remarks, setRemarks] = useState<string>("");
 
     const [sm_status, SetSMStatus] = useState("")
+    const [wtw_status, SetWTWStatus] = useState(false)
 
 
     const [cnfkey, setcnfkey] = useState<string>("");
@@ -214,6 +215,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
                 remarks: remarks,
                 smstatus: sm_status,
                 assignto: assign_to.join(", "),
+                wtw: wtw_status
             }
             const query = Object.entries(params)
                 .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
@@ -221,7 +223,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
 
             const fullUrl = `${base}?${query}`;
 
-            //console.log("Full URL:", fullUrl);
+            console.log("Full URL:", fullUrl);
 
 
             fetch(fullUrl).
@@ -339,6 +341,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
             setPlatform(selectedEntry.platform ? selectedEntry.platform : "");
             setRemarks(selectedEntry.remarks ? selectedEntry.remarks : "");
             SetSMStatus(selectedEntry?.sm_status ? selectedEntry.sm_status : "");
+            SetWTWStatus(selectedEntry?.wtw_status ? selectedEntry.wtw_status : false);
 
             setSmDeadline(selectedEntry.deadline ? selectedEntry.deadline : "");
 
