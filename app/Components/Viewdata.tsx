@@ -384,7 +384,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
-                         <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${smDoc.includes("http")?"flex":"hidden"}`} href={url} target="_blank">URL 🔗</a> 
+                         <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${smDoc.includes("http")?"flex":"hidden"}`} href={smDoc} target="_blank">SM Correcton Doc 🔗</a> 
                          <p className={`${smDoc.includes("http")?"hidden":"flex"}`}>SM Correcton Doc</p></label>
                         <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm`} type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
 
