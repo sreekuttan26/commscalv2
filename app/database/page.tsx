@@ -40,6 +40,9 @@ const Page = () => {
             if (entrydate.getMonth() !== currentDate.getMonth()) {
                 return;
             }
+            if (entrydate.getFullYear() !== currentDate.getFullYear()) {
+                return;
+            }
             itemList.push(entry);
 
         });
