@@ -4,7 +4,7 @@ import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
-import { arrayRemove, arrayUnion, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 
 type Props = {
@@ -363,6 +363,12 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
     }
 
+    const delete_task=async ()=>{
+         const userdocref = doc(firestore, "tasks", title);
+        await deleteDoc(userdocref);
+        changeformvisibility();
+    }
+
 
 
     return (
@@ -529,12 +535,14 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
                 </div>
 
 
-                <div className='w-full flex flex-col justify-center gap-4 py-1 mt-4  sm:flex-row'>
+                <div className={`w-full ${useremail?.length?'flex':'hidden'} flex-col justify-center gap-4 py-1 mt-4  sm:flex-row`}>
                     <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { clearform(); changeformvisibility(); }}>Cancel</div>
 
                     <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as("Working") }}>Mark as Pending</div>
 
                     <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as('Posted') }}>Mark as Completed</div>
+
+                    <div className='px-4 py-2 border-2 border-red-500 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { delete_task()}}>Delete Task</div>
                 </div>
 
 

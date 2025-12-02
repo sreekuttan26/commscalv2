@@ -14,6 +14,7 @@ import { orderByChild, query, ref } from "firebase/database";
 import { format } from "date-fns";
 import { doc, setDoc } from "firebase/firestore";
 import Taskform from "./Components/Taskform";
+import Viewdata from "./Components/Viewdata";
 
 
 
@@ -39,6 +40,9 @@ export default function Home() {
   const [filered_items, Setfileterd_items] = useState<itemprobes[]>([])
 
   const [iseditformopen, setIseditformopen] = useState(false);
+   const [selectedEntry, setSelectedEntry] = useState<taskprobs | null>(null);
+
+  
 
 
 
@@ -49,6 +53,16 @@ export default function Home() {
 
   const [useremail, setUseremail] = useState<string | null>("null");
   const [username, setUsername] = useState<string | null>("null");
+
+
+
+  const manageeditform = (entry?: taskprobs) => {
+    
+            setIseditformopen(!iseditformopen);
+            if (entry) {
+                setSelectedEntry(entry);
+            }
+        }
   
   useEffect(() => {
 
@@ -135,6 +149,9 @@ export default function Home() {
     //     !task.completed_by?.includes(current_task_user) && task.assigned_to?.includes(current_task_user)))))
 
     // }
+
+
+     
 
 
 
@@ -320,7 +337,7 @@ export default function Home() {
             <div className='w-full h-full flex  flex-col gap-4 max-h-[500px] overflow-y-scroll '>
 
               {filtered_tasks?.map((task, index) => (
-                <div key={index} className="w-full flex flex-col border-2 border-gray-200 p-2  bg-white rounded-xl">
+                <div key={index} className="w-full flex flex-col border-2 border-gray-200 p-2 cursor-pointer  bg-white rounded-xl"onClick={() => manageeditform(task)}>
                   <h1 className=" font-semibold text-gray-600">{task.title}</h1>
                   <div className="w-full flex flex-row text-sm gap-4 mt-4 ">
                     <div className="w-full flex flex-row text-sm gap-4 ">
@@ -364,6 +381,12 @@ export default function Home() {
 
 
         </div>
+        <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: iseditformopen ? 'flex' : 'none' }}>
+
+
+                    <Viewdata changeformvisibility={manageeditform} selectedEntry={selectedEntry}   />
+
+                </div>       
 
 
 
