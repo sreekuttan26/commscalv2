@@ -5,15 +5,18 @@ import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } fr
 import { add, format } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
+import { submitToSheet } from '../Posttosheet';
 
 type Props = {
+
+    user?:string,
 
     changeformvisibility: () => void | null,
     selectedEntry?: itemprobes | null
     showToast?: (message: string) => void
 }
 
-const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
+const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props) => {
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
@@ -25,6 +28,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
         });
         return () => unsubscribe();
     }, []);
+
+    const [entryid, Setentryid]=useState('')
 
     const [mentions, setMentions] = useState<string[]>([]);
 
@@ -138,6 +143,13 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
             alert("Please fill all the required fields");
             return;
         }
+
+          callsheetque(
+            "replace"
+
+         );
+
+
         add_to_db({
             date: date,
             createdon: new Date().toISOString().split('T')[0],
@@ -348,6 +360,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
             if (selectedEntry.mention) {
                 const mentionArray = selectedEntry.mention.split(",").map(item => item.trim());
                 setMentions(mentionArray);
+            }else{
+                setMentions([]);
             }
             if (selectedEntry.assigned_to) {
                  
@@ -370,6 +384,32 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast }: Props) => {
             alert("Failed to copy mentions: " + err);
         });
     }
+
+
+      const callsheetque= (action:string)=>{
+            console.log('caling sheet que')
+            const formated_date = date.split("-").reverse().join("/");
+              submitToSheet({
+                id:"",
+         timestamp:new Date().toString().split('GMT')[0],
+            action: action,
+            date: formated_date,
+            category: category,
+            title: title,
+            platform: platform,
+            url: url,
+            description: description,
+            mention: mentionstring,
+            img_url: imgUrl,
+            wtw: wtw_status. toString(),
+            website: '',
+            remarks: remarks,
+            sm_status: sm_status,
+            assigned_to: assign_to.join(", "),
+            req_by: user ||'',
+        });
+    
+        }
 
 
 

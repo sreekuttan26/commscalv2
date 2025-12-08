@@ -5,13 +5,14 @@ import Rightcontainer from '../Components/Rightcontainer'
 
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 
-import { db, firestore, getRegistedUsers, listenToItems } from '../firebase/firebase';
+import { auth, db, firestore, getRegistedUsers, listenToItems } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { itemprobes, taskprobs, updatewtwsheet_url } from '../constants';
 import Dataform from '../Components/Dataform';
 import { format } from 'date-fns';
 import Editform from '../Components/Editform';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 
 const Page = () => {
@@ -22,7 +23,9 @@ const Page = () => {
     const [notification_msg, setNotification_msg] = useState<string>("");
     const [show_notification, setShow_notification] = useState<boolean>(false);
 
-    const[wtw_status, setwtw_status]=useState<boolean>(true);
+    const [wtw_status, setwtw_status] = useState<boolean>(true);
+
+    const [sortcreatedon, setsortcreatedon] = useState(false);
 
     useEffect(() => {
         listenToItems(setEntries)
@@ -30,6 +33,16 @@ const Page = () => {
         getRegistedUsers().then(users => setReg_users(users ?? []))
 
     }, [])
+
+
+    const [username, setUsername] = useState<string | null>("null");
+    useEffect(() => {
+
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            setUsername(user?.displayName ?? "Login");
+        });
+        return () => unsubscribe();
+    }, []);
 
     const [currentMonth, setCurrentMonth] = useState('');
 
@@ -50,6 +63,13 @@ const Page = () => {
 
     }, [currentMonth, entries])
 
+
+
+
+
+
+
+
     const [currentDate, setCurrentDate] = useState(new Date());
 
 
@@ -67,7 +87,7 @@ const Page = () => {
         setIseditformopen(!iseditformopen);
 
         if (entry) {
-            
+
             setSelectedEntry(entry);
         }
 
@@ -158,7 +178,7 @@ const Page = () => {
     }
 
 
-     const updatedwtw_status = async (title: string, status: boolean, date: string) => {
+    const updatedwtw_status = async (title: string, status: boolean, date: string) => {
         const dataRef = ref(db, '/items/');
         const queryRef = query(dataRef, orderByChild('title'), equalTo(title));
         const snapshot = await get(queryRef);
@@ -173,7 +193,7 @@ const Page = () => {
                     .then(() => {
                         //console.log('wtw_status updated successfully!');
                         //get_from_db();
-                       
+
 
                     })
                     .catch((error) => {
@@ -186,8 +206,8 @@ const Page = () => {
 
     }
 
-     const updateSheetwtw = (date: string, title: string, current_status: boolean) => {
-        
+    const updateSheetwtw = (date: string, title: string, current_status: boolean) => {
+
         const formattedDate = format(date, 'MMM yy');
         const params = {
             sheetname: formattedDate,
@@ -312,6 +332,30 @@ const Page = () => {
         }, 5000);
     }
 
+    const sortdata = () => {
+
+        console.log(sortcreatedon)
+        // flip the toggle first
+        const newSortState = !sortcreatedon;
+        setsortcreatedon(newSortState);
+
+        // clone the array
+        let tempentries = [...currrentMonthEntries];
+
+        // choose the correct field
+        if (newSortState) {
+            tempentries.sort((a, b) => {
+                return new Date(b.createdon).getTime() - new Date(a.createdon).getTime();
+            });
+        } else {
+            tempentries.sort((a, b) => {
+                return new Date(b.date).getTime() - new Date(a.date).getTime();
+            });
+        }
+
+        setCurrentMonthEntries(tempentries);
+    };
+
 
 
 
@@ -338,7 +382,12 @@ const Page = () => {
                 <div className=' mt-16 overflow-y-auto max-h-screen flex flex-col gap-2 '>
 
                     <div className={`sm:flex  hidden w-full  p-4 gap-4 items-center bg-blue-200 justify-around sticky top-0 z-10 rounded-xl `}>
-                        <h1 className='text-sm  align-middle text-center font-semibold w-[8%]'>Date</h1>
+                        <div>
+                              <h1 className='text-sm  align-middle text-cente cursor-pointer font-semibold w-[8%]' onClick={() => { sortdata() }}>Date </h1>
+                                <h1 className='text-xs  align-middle text-cente cursor-pointer text-gray-400 ' onClick={() => { sortdata() }}> {sortcreatedon?'\n created on':''}</h1>
+
+                        </div>
+                       
                         <h1 className='text-sm text-center align-middle font-semibold justify-center w-[15%]'>Category</h1>
                         <h2 className='w-[20%] text-center overflow-clip text-sm font-semibold'>Title</h2>
                         <p className='w-[20%]   overflow-clip text-sm text-center font-semibold'>mention</p>
@@ -353,10 +402,17 @@ const Page = () => {
 
                                 <h1 className={`text-sm ${entry.sm_status === "Posted" ? "bg-green-200" : entry.sm_status === "Working" ? "bg-orange-200" : entry.sm_status === "No Post" ? "bg-red-200" : entry.sm_status === "Pending Breakdown" ? "bg-yellow-200" : "bg-white"}  rounded-xl p-2 text-left align-middle justify-start w-[15%]`}>{entry.category}</h1>
 
-                                <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title}</h2>
+                                <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title} </h2>
                                 <p className='w-[20%]   text-sm text-center whitespace-normal break-words max-h-[100px] overflow-clip '>{entry.mention}</p>
                                 <p className='w-[5%]  overflow-clip text-sm text-center'>
-                                    <input type='checkbox' checked={entry.wtw_status?entry.wtw_status:false} onChange={(e) =>updatedwtw_status(entry.title,e.target.checked,entry.date)} /></p>
+
+
+
+
+
+
+
+                                    <input type='checkbox' checked={entry.wtw_status ? entry.wtw_status : false} onChange={(e) => updatedwtw_status(entry.title, e.target.checked, entry.date)} /></p>
                                 <p className='w-[15%]  overflow-clip text-sm text-center'><select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date)}>
                                     <option value="">Select</option>
                                     <option value="Working">Working</option>
@@ -412,30 +468,29 @@ const Page = () => {
 
                 </div>
                 <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: isdataformopen ? 'flex' : 'none' }}>
-                    <Dataform changeformvisibility={changeformvisibility}  showToast={showToast}/>
+                    <Dataform changeformvisibility={changeformvisibility} showToast={showToast} user={username || 'user not found'} />
 
                 </div>
 
 
                 <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: iseditformopen ? 'flex' : 'none' }}>
-                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} />
+                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} user={username || 'user not found'} />
 
                 </div>
 
                 {/* ------------------notification------------------------------------------------------------------------------ */}
-                <div className={`absolute top-0 right-0 m-4 p-4 rounded-2xl bg-white ${show_notification?"flex":"hidden"} border-2 border-blue-300 shadow-2xl flex-col justify-start z-20`}>
+                <div className={`absolute top-0 right-0 m-4 p-4 rounded-2xl bg-white ${show_notification ? "flex" : "hidden"} border-2 border-blue-300 shadow-2xl flex-col justify-start z-20`}>
                     <h1 className="font-semibold text-gray-700 ">Notification</h1>
                     <div className='w-full flex 0 my-2'>
                         <p>🔔</p>
                         <p className="text-sm text-gray-500">{notification_msg}</p>
                     </div>
-                    
+
 
                 </div>
 
 
             </div>
-
 
 
 

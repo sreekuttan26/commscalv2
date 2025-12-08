@@ -1,17 +1,20 @@
+
 import React, { useEffect, useState } from 'react'
 import { categorylist, itemprobes, mentionlist, platformlist, taskprobs } from '../constants'
 import { db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add } from 'date-fns';
 import { doc, setDoc } from 'firebase/firestore';
+ import { submitToSheet } from '../Posttosheet';
 
 type Props = {
+    user?:string,
 
     changeformvisibility: () => void,
     showToast?: (message: string) => void,
 }
 
-const Dataform = ({ changeformvisibility,showToast }: Props) => {
+const Dataform =  ({ changeformvisibility, showToast, user }: Props) => {
 
     const [mentions, setMentions] = useState<string[]>([]);
     const [assignedTo, setassign_to] = useState<string[]>([]);
@@ -27,10 +30,10 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
     const [platform, setPlatform] = useState<string>("");
     const [remarks, setRemarks] = useState<string>("");
 
-    const[ date_error, setDate_error]=useState<boolean>(false);
-    const [categorry_error, setCategory_error]=useState<boolean>(false);
-    const [title_error, setTitle_error]=useState<boolean>(false);
-    const [url_error, seturl_error]=useState<boolean>(false);
+    const [date_error, setDate_error] = useState<boolean>(false);
+    const [categorry_error, setCategory_error] = useState<boolean>(false);
+    const [title_error, setTitle_error] = useState<boolean>(false);
+    const [url_error, seturl_error] = useState<boolean>(false);
 
 
 
@@ -61,7 +64,7 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
         })
             .then(() => {
                 //console.log('Data added successfully!');
-                showToast?showToast("Data added successfully!"):""
+                showToast ? showToast("Data added successfully!") : ""
 
                 clearform();
             })
@@ -72,35 +75,46 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
 
     const processDBpush = () => {
 
-         if(date==""){
-                setDate_error(true);
-            }else{
-                setDate_error(false);
-            }
-            if(title==""){
-                setTitle_error(true);
-            }else{
-                setTitle_error(false);
-            }   
-            if(category==""){
-                setCategory_error(true);
-            }
-            else{
-                setCategory_error(false);
-            }
-            if(url==""){
-                seturl_error(true);
-            }
-            else{
-                seturl_error(false);
-            }
+        
+        
+
+        if (date == "") {
+            setDate_error(true);
+        } else {
+            setDate_error(false);
+        }
+        if (title == "") {
+            setTitle_error(true);
+        } else {
+            setTitle_error(false);
+        }
+        if (category == "") {
+            setCategory_error(true);
+        }
+        else {
+            setCategory_error(false);
+        }
+        if (url == "") {
+            seturl_error(true);
+        }
+        else {
+            seturl_error(false);
+        }
 
 
-        if (date == "" || title == "" || category == "" || url=="") {
-           
+        if (date == "" || title == "" || category == "" || url == "") {
+
             alert("Please fill all the required fields");
             return;
         }
+         callsheetque(
+            "create"
+
+         );
+
+        
+
+
         add_to_db({
             date: date,
             createdon: new Date().toISOString().split('T')[0],
@@ -140,8 +154,11 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
     }
 
     const add_to_sheet = async () => {
+       
+
+
         const base = "https://script.google.com/macros/s/AKfycbzQv0oxAnSlRgopSeS_85XQ6eY7cKiCFepklNJUPtmSPsF_FtYpXjvIh7P9iHfZ55Yezg/exec";
-        const formated_date=date.split("-").reverse().join("/");
+        const formated_date = date.split("-").reverse().join("/");
         const params = {
             date: formated_date,
             title: title,
@@ -166,16 +183,42 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
 
 
         fetch(fullUrl).
-        then(res => res.text())
+            then(res => res.text())
             .then(response => {
                 //alert("Resp:" + response);
-                showToast?showToast("Sheet status: "+response):""
+                showToast ? showToast("Sheet status: " + response) : ""
             })
             .catch(error => {
-               showToast?showToast("Sheet Error: "+error):""
+                showToast ? showToast("Sheet Error: " + error) : ""
             });
 
     }
+
+    const callsheetque= (action:string)=>{
+        console.log('caling sheet que')
+        const formated_date = date.split("-").reverse().join("/");
+          submitToSheet({
+     timestamp:new Date().toString().split('GMT')[0],
+        action: action,
+        date: formated_date,
+        category: category,
+        title: title,
+        platform: platform,
+        url: url,
+        description: description,
+        mention: mentionstring,
+        img_url: imgUrl,
+        wtw: 'false',
+        website: '',
+        remarks: remarks,
+        sm_status: '',
+        assigned_to: '',
+        req_by: user ||'',
+    });
+
+    }
+
+   
 
 
 
@@ -188,12 +231,12 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Date *</label>
-                    <input className={`p-2 border-2 ${date_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
+                    <input className={`p-2 border-2 ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Title *</label>
-                    <input className={`p-2 border-2  ${title_error?"border-red-200":"border-gray-100"}  rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
+                    <input className={`p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"}  rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
@@ -205,7 +248,7 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>URL*</label>
-                        <input className={`p-2 border-2 ${url_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+                        <input className={`p-2 border-2 ${url_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                     </div>
                     <div className='w-full flex flex-col '>
 
@@ -226,7 +269,7 @@ const Dataform = ({ changeformvisibility,showToast }: Props) => {
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Category *</label>
-                        <input className={`p-2 border-2  ${categorry_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='text' list='category' onChange={(e) => { setCategory(e.target.value) }} value={category}>
+                        <input className={`p-2 border-2  ${categorry_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' list='category' onChange={(e) => { setCategory(e.target.value) }} value={category}>
                         </input>
                         <datalist id='category'>
                             {categorylist.map((item, index) => (
