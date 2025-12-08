@@ -390,7 +390,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
             console.log('caling sheet que')
             const formated_date = date.split("-").reverse().join("/");
               submitToSheet({
-                id:"",
+                
          timestamp:new Date().toString().split('GMT')[0],
             action: action,
             date: formated_date,
