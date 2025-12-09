@@ -80,6 +80,12 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
     const add_to_db = ({ date, createdon, title, assigned_to, deadline, description, category, platform, url, img_url, mention, remarks, sm_status }: itemprobes) => {
         const dataRef = ref(db, '/items/' + selectedEntry?.id);
         const newdataRef = push(dataRef);
+
+        
+
+
+
+        console.log("sm== "+sm_status)
         update(dataRef, {
             date: date,
             createdon: createdon,
@@ -94,6 +100,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
             img_url: img_url,
             mention: mention,
             remarks: remarks,
+            sm_status:sm_status
 
         })
             .then(() => {
@@ -149,6 +156,21 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
 
          );
 
+       
+
+         
+            let customsm_status=sm_status;
+
+             if(sm_status.length<1 && assigned_toString.length>0){
+                    customsm_status='Working'
+                }
+
+             if(sm_status.length>1 && assigned_toString.length<1){
+                    customsm_status=''
+                }
+        
+
+
 
         add_to_db({
             date: date,
@@ -162,7 +184,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
             platform: platform,
             url: url,
             img_url: imgUrl,
-            sm_status: sm_status,
+            sm_status: customsm_status,
             mention: mentionstring,
             website_status: false,
             remarks: remarks
@@ -177,8 +199,13 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
 
 
     const addToTask = ({ title, description, url, assigned_to }: taskprobs) => {
+
+       
+
+
         try {
             const taskref = doc(firestore, "tasks", title);
+            
 
             setDoc(taskref, {
 
@@ -367,9 +394,15 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
                  
                 const assignToArray = selectedEntry.assigned_to.split(",").map(item => item.trim());
                 setAssignTo(assignToArray);
+
+               
+                
             }else{
                 setAssignTo([]);
+               
             }
+
+               
         }
     }, [selectedEntry, click]);
 
