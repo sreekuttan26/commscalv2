@@ -340,7 +340,7 @@ const Page = () => {
         setsortcreatedon(newSortState);
 
         // clone the array
-        let tempentries = [...currrentMonthEntries];
+        const tempentries = [...currrentMonthEntries];
 
         // choose the correct field
         if (newSortState) {
