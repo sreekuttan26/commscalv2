@@ -40,9 +40,9 @@ export default function Home() {
   const [filered_items, Setfileterd_items] = useState<itemprobes[]>([])
 
   const [iseditformopen, setIseditformopen] = useState(false);
-   const [selectedEntry, setSelectedEntry] = useState<taskprobs | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<taskprobs | null>(null);
 
-  
+
 
 
 
@@ -57,27 +57,27 @@ export default function Home() {
 
 
   const manageeditform = (entry?: taskprobs) => {
-    
-            setIseditformopen(!iseditformopen);
-            if (entry) {
-                setSelectedEntry(entry);
-            }
-        }
-  
+
+    setIseditformopen(!iseditformopen);
+    if (entry) {
+      setSelectedEntry(entry);
+    }
+  }
+
   useEffect(() => {
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUseremail(user?.email ?? "No user signed in");
       setUsername(user?.displayName ?? "");
-     
+
     });
 
-     Setitemcategories([])
-     Setitems([])
-     Settasks([])
+    Setitemcategories([])
+    Setitems([])
+    Settasks([])
 
-     listenToItems(Setitems)
-     listenToTasks(Settasks)
+    listenToItems(Setitems)
+    listenToTasks(Settasks)
 
 
 
@@ -117,14 +117,14 @@ export default function Home() {
     }
     if (current_task_user.length <= 3 && current_task_status.length <= 3) {
       Setfiltered_tasks(
-         [...(tasks ?? [])].sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).filter((task=>(task.assigned_to.length>0))))       
-        //[...(tasks ?? [])].reverse()
-        // [...(tasks ?? [])].sort(
-        //   (a, b) =>
-        //     new Date(b.date ?? b.createdon ?? 0).getTime() -
-        //     new Date(a.date ?? a.createdon ?? 0).getTime()
+        [...(tasks ?? [])].sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime()).filter((task => (task.assigned_to.length > 0))))
+      //[...(tasks ?? [])].reverse()
+      // [...(tasks ?? [])].sort(
+      //   (a, b) =>
+      //     new Date(b.date ?? b.createdon ?? 0).getTime() -
+      //     new Date(a.date ?? a.createdon ?? 0).getTime()
 
-        // ))
+      // ))
       return
 
     }
@@ -151,7 +151,7 @@ export default function Home() {
     // }
 
 
-     
+
 
 
 
@@ -165,16 +165,16 @@ export default function Home() {
         const matchUser =
           current_task_user.length <= 3 ||
           (
-          task.assigned_to?.includes(current_task_user) &&
-          !task.completed_by?.includes(current_task_user));
+            task.assigned_to?.includes(current_task_user) &&
+            !task.completed_by?.includes(current_task_user));
 
         const matchStatus =
           current_task_status.length <= 3 ||
           (task.assigned_to?.includes(current_task_user) &&
-          !task.completed_by?.includes(current_task_user));
+            !task.completed_by?.includes(current_task_user));
 
-          //console.log('matchUser= '+matchUser)
-          //console.log('matchstatus '+matchStatus)
+        //console.log('matchUser= '+matchUser)
+        //console.log('matchstatus '+matchStatus)
 
         return matchUser && matchStatus;
       })
@@ -337,8 +337,12 @@ export default function Home() {
             <div className='w-full h-full flex  flex-col gap-4 max-h-[500px] overflow-y-scroll '>
 
               {filtered_tasks?.map((task, index) => (
-                <div key={index} className="w-full flex flex-col border-2 border-gray-200 p-2 cursor-pointer  bg-white rounded-xl"onClick={() => manageeditform(task)}>
-                  <h1 className=" font-semibold text-gray-600">{task.title}</h1>
+                <div key={index} className="w-full flex flex-col border-2 border-gray-200 p-2 cursor-pointer  bg-white rounded-xl" onClick={() => manageeditform(task)}>
+                  <h1 className=" font-semibold text-gray-600">{task.title} </h1>
+                  <div className="w-full flex"> 
+                    <p className='text-xs p-2 border-2 border-gray-200 rounded-xl '>{task.category}</p>
+                  </div>
+
                   <div className="w-full flex flex-row text-sm gap-4 mt-4 ">
                     <div className="w-full flex flex-row text-sm gap-4 ">
                       <p className='text-blue-400'> {task.date ? format(new Date(task.date), 'dd MMM') : 'No date'}</p>
@@ -384,9 +388,9 @@ export default function Home() {
         <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: iseditformopen ? 'flex' : 'none' }}>
 
 
-                    <Viewdata changeformvisibility={manageeditform} selectedEntry={selectedEntry}   />
+          <Viewdata changeformvisibility={manageeditform} selectedEntry={selectedEntry} />
 
-                </div>       
+        </div>
 
 
 
