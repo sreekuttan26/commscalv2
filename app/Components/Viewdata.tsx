@@ -4,7 +4,7 @@ import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
-import { arrayRemove, arrayUnion, deleteDoc, doc, setDoc, updateDoc } from 'firebase/firestore';
+import { arrayRemove, arrayUnion, deleteDoc, doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 
 type Props = {
@@ -43,6 +43,9 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
     const [category, setCategory] = useState<string>("");
     const [platform, setPlatform] = useState<string>("");
     const [remarks, setRemarks] = useState<string>("");
+    const [sm_status, SetSMStatus] = useState("")
+
+    const [id, Setid] = useState("")
 
 
     const [cnfkey, setcnfkey] = useState<string>("");
@@ -170,8 +173,8 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
                 alert("Task added successfully!");
                 console.log("assigned to= " + selectedEntry?.assigned_to)
                 console.log("complted by= " + selectedEntry?.completed_by)
-                if ((selectedEntry?.assigned_to?.length ?? 0) === ((selectedEntry?.completed_by?.length ?? 0)+1)) {
-                     updatedsmstatus(title,current_status,selectedEntry?.date??"");
+                if ((selectedEntry?.assigned_to?.length ?? 0) === ((selectedEntry?.completed_by?.length ?? 0) + 1)) {
+                    updatedsmstatus(title, current_status, selectedEntry?.date ?? "");
                     return;
 
                 }
@@ -290,6 +293,9 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
             setCategory(selectedEntry.category ? selectedEntry.category : "");
             setPlatform(selectedEntry.platform ? selectedEntry.platform : "");
             setRemarks(selectedEntry.remarks ? selectedEntry.remarks : "");
+            SetSMStatus(selectedEntry?.current_status ? selectedEntry.current_status : "");
+
+            Setid(selectedEntry?.id ? selectedEntry.id : "");
 
             setSmDeadline(selectedEntry.deadline ? selectedEntry.deadline : "");
 
@@ -363,9 +369,22 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
     }
 
-    const delete_task=async ()=>{
-         const userdocref = doc(firestore, "tasks", title);
-        await deleteDoc(userdocref);
+    const delete_task = async () => {
+        const userdocref = doc(firestore, "tasks", title);
+        const userdocref0 = doc(firestore, "tasks", id);
+
+
+
+        const docSnap = await getDoc(userdocref);
+        if (docSnap.exists()) {
+            await deleteDoc(userdocref);
+        }
+
+        const docSnap0 = await getDoc(userdocref0);
+        if (docSnap0.exists()) {
+            await deleteDoc(userdocref0);
+        }
+
         changeformvisibility();
     }
 
@@ -390,11 +409,11 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
-                         <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${smDoc.includes("http")?"flex":"hidden"}`} href={smDoc} target="_blank">SM Correcton Doc 🔗</a> 
-                         <p className={`${smDoc.includes("http")?"hidden":"flex"}`}>SM Correcton Doc</p></label>
+                        <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${smDoc.includes("http") ? "flex" : "hidden"}`} href={smDoc} target="_blank">SM Correcton Doc 🔗</a>
+                            <p className={`${smDoc.includes("http") ? "hidden" : "flex"}`}>SM Correcton Doc</p></label>
                         <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm`} type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
 
-                        
+
 
                     </div>
 
@@ -414,6 +433,10 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
                         <label className='text-sm font-medium text-gray-600 px-2'>Deadline</label>
                         <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm text-red-600 ' type='date' onChange={(e) => { setSmDeadline(e.target.value) }} value={Smdeadline}></input>
                     </div>
+
+                </div>
+                <div className='text-xs p-2'>
+                    <h1 >SM: {sm_status}</h1>
 
                 </div>
 
@@ -453,7 +476,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
-                        <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${url.includes("http")?"flex":"hidden"}`} href={url} target="_blank">URL 🔗</a> <p className={`${url.includes("http")?"hidden":"flex"}`}>URL</p></label>
+                        <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${url.includes("http") ? "flex" : "hidden"}`} href={url} target="_blank">URL 🔗</a> <p className={`${url.includes("http") ? "hidden" : "flex"}`}>URL</p></label>
                         <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                     </div>
                     <div className='w-full flex flex-col '>
@@ -535,14 +558,14 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
                 </div>
 
 
-                <div className={`w-full ${useremail?.length?'flex':'hidden'} flex-col justify-center gap-4 py-1 mt-4  sm:flex-row`}>
+                <div className={`w-full ${useremail?.length ? 'flex' : 'hidden'} flex-col justify-center gap-4 py-1 mt-4  sm:flex-row`}>
                     <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { clearform(); changeformvisibility(); }}>Cancel</div>
 
                     <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as("Working") }}>Mark as Pending</div>
 
                     <div className='px-4 py-2 border-2 border-green-300 shadow hover:bg-green-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { mark_as('Posted') }}>Mark as Completed</div>
 
-                    <div className='px-4 py-2 border-2 border-red-500 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { delete_task()}}>Delete Task</div>
+                    <div className='px-4 py-2 border-2 border-red-500 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { delete_task() }}>Delete Task</div>
                 </div>
 
 

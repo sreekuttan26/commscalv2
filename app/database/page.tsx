@@ -149,7 +149,7 @@ const Page = () => {
     //         });
     // }
 
-    const updatedsmstatus = async (title: string, status: string, date: string) => {
+    const updatedsmstatus = async (title: string, status: string, date: string, id: string) => {
         const dataRef = ref(db, '/items/');
         const queryRef = query(dataRef, orderByChild('title'), equalTo(title));
         const snapshot = await get(queryRef);
@@ -164,7 +164,7 @@ const Page = () => {
                     .then(() => {
                         //console.log('sm_status updated successfully!');
                         //get_from_db();
-                        updatetask(title, status, date)
+                        updatetask(title, status, date, id)
 
                     })
                     .catch((error) => {
@@ -260,28 +260,48 @@ const Page = () => {
     }, [currentDate]);
 
 
-    const updatetask = async (title: string, current_status: string, date: string) => {
+    const updatetask = async (title: string, current_status: string, date: string, id: string) => {
 
         try {
+
+            console.log('id')
+
+            const userdocref0 = doc(firestore, "tasks", id);
 
 
             const userdocref = doc(firestore, "tasks", title);
             const docSnap = await getDoc(userdocref);
-            if (!docSnap.exists()) {
+            if (docSnap.exists()) {
                 //alert("Pleae assign a user");
-                return;
-            }
-
-
-
-
-            await updateDoc(userdocref, {
+                // return; 
+                await updateDoc(userdocref, {
                 title: title,
 
                 current_status: current_status,
 
 
             });
+
+
+            }
+            const docSnap0 = await getDoc(userdocref0);
+            if (docSnap0.exists()) {
+
+                await updateDoc(userdocref0, {
+                title: title,
+
+                current_status: current_status,
+
+
+            });
+                
+            }
+
+
+
+
+           
+            
             alert("Task added successfully!");
 
 
@@ -383,11 +403,11 @@ const Page = () => {
 
                     <div className={`sm:flex  hidden w-full  p-4 gap-4 items-center bg-blue-200 justify-around sticky top-0 z-10 rounded-xl `}>
                         <div>
-                              <h1 className='text-sm  align-middle text-cente cursor-pointer font-semibold w-[8%]' onClick={() => { sortdata() }}>Date </h1>
-                                <h1 className='text-xs  align-middle text-cente cursor-pointer text-gray-400 ' onClick={() => { sortdata() }}> {sortcreatedon?'\n created on':''}</h1>
+                            <h1 className='text-sm  align-middle text-cente cursor-pointer font-semibold w-[8%]' onClick={() => { sortdata() }}>Date </h1>
+                            <h1 className='text-xs  align-middle text-cente cursor-pointer text-gray-400 ' onClick={() => { sortdata() }}> {sortcreatedon ? '\n created on' : ''}</h1>
 
                         </div>
-                       
+
                         <h1 className='text-sm text-center align-middle font-semibold justify-center w-[15%]'>Category</h1>
                         <h2 className='w-[20%] text-center overflow-clip text-sm font-semibold'>Title</h2>
                         <p className='w-[20%]   overflow-clip text-sm text-center font-semibold'>mention</p>
@@ -413,7 +433,7 @@ const Page = () => {
 
 
                                     <input type='checkbox' checked={entry.wtw_status ? entry.wtw_status : false} onChange={(e) => updatedwtw_status(entry.title, e.target.checked, entry.date)} /></p>
-                                <p className='w-[15%]  overflow-clip text-sm text-center'><select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date)}>
+                                <p className='w-[15%]  overflow-clip text-sm text-center'><select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date, entry.id ? entry.id : '00')}>
                                     <option value="">Select</option>
                                     <option value="Working">Working</option>
                                     <option value="No Post">No Post</option>

@@ -204,7 +204,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
 
 
         try {
-            const taskref = doc(firestore, "tasks", title);
+            const uid=selectedEntry?.id ||""
+            const taskref = doc(firestore, "tasks", uid);
             
 
             setDoc(taskref, {
@@ -487,6 +488,10 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
                         <label className='text-sm font-medium text-gray-600 px-2'>Dead line</label>
                         <input className={`p-2 border-2  ${deadline_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm text-red-600 `} type='date' onChange={(e) => { setSmDeadline(e.target.value) }} value={Smdeadline}></input>
                     </div>
+
+                </div>
+                <div className='text-xs p-2'>
+                    <h1 >SM: {sm_status}</h1>
 
                 </div>
 

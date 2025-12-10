@@ -160,17 +160,21 @@ export default function Home() {
 
 
 
+
+
     Setfiltered_tasks(
       tasks?.filter((task) => {
         const matchUser =
           current_task_user.length <= 3 ||
           (
             task.assigned_to?.includes(current_task_user) &&
+            task.current_status?.includes('Working')  &&
             !task.completed_by?.includes(current_task_user));
 
         const matchStatus =
           current_task_status.length <= 3 ||
           (task.assigned_to?.includes(current_task_user) &&
+            task.current_status?.includes('Working')  &&
             !task.completed_by?.includes(current_task_user));
 
         //console.log('matchUser= '+matchUser)
@@ -179,6 +183,8 @@ export default function Home() {
         return matchUser && matchStatus;
       })
     );
+
+   
 
   };
   const addToTask = ({ date, deadline, title, description, url, assigned_to }: taskprobs) => {
@@ -289,6 +295,10 @@ export default function Home() {
           {/*------------------------------------------- Pendding works [start] ----------------------------------------------------- */}
           <div className="w-full bg-white flex flex-col gap-2 border-2 rounded-xl border-blue-300 p-4 ">
             <h1 className=" text-gray-700 text-sm font-semibold border-b-2 border-blue-400 w-10 uppercase align-baseline">Tasks</h1>
+
+            <div>
+              Tasks: {filtered_tasks.length}
+            </div>
 
             {/* users */}
             <div className="w-full flex gap-4 justify-between">
