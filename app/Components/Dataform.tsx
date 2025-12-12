@@ -49,6 +49,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
 
     const [message, setMessage] = useState<string>('Select a file to start the upload.');
     const [loading, setLoading] = useState<boolean>(false);
+    const [uploadlabel, setuploadlabel] = useState("Select a file");
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (loading) {
@@ -66,6 +67,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
         //check file selected
         setLoading(true)
         setMessage("uploading file " + selecetedFile.name)
+        setuploadlabel("Uploading file " + selecetedFile.name)
 
         try {
             const formData = new FormData();
@@ -98,6 +100,8 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
 
         } finally {
             setLoading(false)
+            setuploadlabel("Select a file")
+
         }
 
 
@@ -347,14 +351,14 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
                                 htmlFor="fileUpload"
                                 className="cursor-pointer text-sm bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
                             >
-                                Select a File
+                                {uploadlabel}
                             </label>
                             <input
                                 id="fileUpload"
                                 type="file"
                                 accept="*/*"
                                 onChange={handleFileUpload}
-                                className="text-sm bg-blue-200 text-center rounded-xl shadow-xl p-2 "
+                                className="text-sm bg-blue-200 text-center rounded-xl shadow-xl p-2 hidden "
                             />
                         </div>
 
