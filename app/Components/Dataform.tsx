@@ -354,7 +354,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
                                 type="file"
                                 accept="*/*"
                                 onChange={handleFileUpload}
-                                className="text-sm bg-blue-200 text-center rounded-xl shadow-xl p-2 hidden"
+                                className="text-sm bg-blue-200 text-center rounded-xl shadow-xl p-2 "
                             />
                         </div>
 
