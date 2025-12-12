@@ -5,16 +5,24 @@ import { db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add } from 'date-fns';
 import { doc, setDoc } from 'firebase/firestore';
- import { submitToSheet } from '../Posttosheet';
+import { submitToSheet } from '../Posttosheet';
+
+
+interface UploadResponse {
+    message: string;
+    fileId: string;
+    fileName: string;
+    filelink: string;
+}
 
 type Props = {
-    user?:string,
+    user?: string,
 
     changeformvisibility: () => void,
     showToast?: (message: string) => void,
 }
 
-const Dataform =  ({ changeformvisibility, showToast, user }: Props) => {
+const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
 
     const [mentions, setMentions] = useState<string[]>([]);
     const [assignedTo, setassign_to] = useState<string[]>([]);
@@ -34,6 +42,90 @@ const Dataform =  ({ changeformvisibility, showToast, user }: Props) => {
     const [categorry_error, setCategory_error] = useState<boolean>(false);
     const [title_error, setTitle_error] = useState<boolean>(false);
     const [url_error, seturl_error] = useState<boolean>(false);
+
+
+
+
+
+    const [message, setMessage] = useState<string>('Select a file to start the upload.');
+    const [loading, setLoading] = useState<boolean>(false);
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (loading) {
+            setMessage('upload in progress')
+            return;
+        }
+
+        const selecetedFile = e.target.files?.[0]
+
+        if (!selecetedFile) {
+            alert("No file selecetd")
+            return;
+        }
+
+        //check file selected
+        setLoading(true)
+        setMessage("uploading file " + selecetedFile.name)
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selecetedFile);
+            formData.append("fileName", selecetedFile.name)
+
+            const response = await fetch('/api/upload', {
+                method: 'POST',
+                body: formData,
+            })
+
+
+
+            if (!response.ok) {
+                const errordata = await response.json()
+                throw new Error(errordata.error || "upload failed on server");
+            }
+
+            const resposeData = await response.json()
+
+            const data: UploadResponse = resposeData;
+
+            console.log(data.filelink)
+            setUrl(data.filelink + "")
+
+            e.target.value = ''
+
+        } catch (error) {
+            console.log("upload error: " + error)
+
+        } finally {
+            setLoading(false)
+        }
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+    //     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    //         const file = e.target.files?.[0];
+    //         if (!file) return;
+
+    //         const formData = new FormData();
+    //         formData.append("file", file);
+
+    //         const res = await fetch('/api/upload', { method: 'POST', body: formData });
+    //     const data = await res.json();
+
+    //     if (res.ok) setFileUrl(data.webViewLink || '');
+    //     else alert(data.error);
+    //   };
 
 
 
@@ -75,8 +167,8 @@ const Dataform =  ({ changeformvisibility, showToast, user }: Props) => {
 
     const processDBpush = () => {
 
-        
-        
+
+
 
         if (date == "") {
             setDate_error(true);
@@ -107,12 +199,12 @@ const Dataform =  ({ changeformvisibility, showToast, user }: Props) => {
             alert("Please fill all the required fields");
             return;
         }
-         callsheetque(
+        callsheetque(
             "create"
 
-         );
+        );
 
-        
+
 
 
         add_to_db({
@@ -154,7 +246,7 @@ const Dataform =  ({ changeformvisibility, showToast, user }: Props) => {
     }
 
     const add_to_sheet = async () => {
-       
+
 
 
         const base = "https://script.google.com/macros/s/AKfycbzQv0oxAnSlRgopSeS_85XQ6eY7cKiCFepklNJUPtmSPsF_FtYpXjvIh7P9iHfZ55Yezg/exec";
@@ -194,31 +286,31 @@ const Dataform =  ({ changeformvisibility, showToast, user }: Props) => {
 
     }
 
-    const callsheetque= (action:string)=>{
+    const callsheetque = (action: string) => {
         console.log('caling sheet que')
         const formated_date = date.split("-").reverse().join("/");
-          submitToSheet({
-     timestamp:new Date().toString().split('GMT')[0],
-        action: action,
-        date: formated_date,
-        category: category,
-        title: title,
-        platform: platform,
-        url: url,
-        description: description,
-        mention: mentionstring,
-        img_url: imgUrl,
-        wtw: 'false',
-        website: '',
-        remarks: remarks,
-        sm_status: '',
-        assigned_to: '',
-        req_by: user ||'',
-    });
+        submitToSheet({
+            timestamp: new Date().toString().split('GMT')[0],
+            action: action,
+            date: formated_date,
+            category: category,
+            title: title,
+            platform: platform,
+            url: url,
+            description: description,
+            mention: mentionstring,
+            img_url: imgUrl,
+            wtw: 'false',
+            website: '',
+            remarks: remarks,
+            sm_status: '',
+            assigned_to: '',
+            req_by: user || '',
+        });
 
     }
 
-   
+
 
 
 
@@ -249,6 +341,24 @@ const Dataform =  ({ changeformvisibility, showToast, user }: Props) => {
 
                         <label className='text-sm font-medium text-gray-600 px-2'>URL*</label>
                         <input className={`p-2 border-2 ${url_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+
+                        <div className='flex items-center p-2'>
+                            <label
+                                htmlFor="fileUpload"
+                                className="cursor-pointer text-sm bg-blue-500 text-white px-4 py-2 rounded-lg shadow-md hover:bg-blue-700 transition"
+                            >
+                                Select a File
+                            </label>
+                            <input
+                                id="fileUpload"
+                                type="file"
+                                accept="*/*"
+                                onChange={handleFileUpload}
+                                className="text-sm bg-blue-200 text-center rounded-xl shadow-xl p-2 hidden"
+                            />
+                        </div>
+
+
                     </div>
                     <div className='w-full flex flex-col '>
 
