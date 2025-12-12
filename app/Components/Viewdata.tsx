@@ -138,7 +138,7 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
             .then(() => {
                 //console.log('Data added successfully!');
                 clearform();
-                updatetask(title, value)
+                updatetask(title, value, selectedEntry?.id || "")
 
                 changeformvisibility();
 
@@ -152,12 +152,24 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
     }
 
-    const updatetask = async (title: string, current_status: string) => {
+    const updatetask = async (title: string, current_status: string, id: string) => {
         console.log("assigned to 0= " + selectedEntry?.assigned_to?.length)
         console.log("completed by 0= " + selectedEntry?.completed_by?.length);
 
         try {
-            const userdocref = doc(firestore, "tasks", title);
+            let userdocref = doc(firestore, "tasks", title);
+           
+            const snapshot = await getDoc(userdocref);
+
+            if (snapshot.exists()) {
+                console.log("Document exists:", snapshot.data());
+                
+            } else {
+                console.log("Document does not exist.");
+                 userdocref = doc(firestore, "tasks", id);
+            }
+
+
 
             if (current_status === "Posted") {
                 await updateDoc(userdocref, {
