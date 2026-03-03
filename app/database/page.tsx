@@ -178,7 +178,7 @@ const Page = () => {
     }
 
 
-    const updatedwtw_status = async (title: string, status: boolean, date: string) => {
+    const updatedwtw_status = async (title: string, status: string, date: string) => {
         const dataRef = ref(db, '/items/');
         const queryRef = query(dataRef, orderByChild('title'), equalTo(title));
         const snapshot = await get(queryRef);
@@ -187,7 +187,15 @@ const Page = () => {
             snapshot.forEach((childSnapshot) => {
                 const key = childSnapshot.key;
                 const updates: Record<string, any> = {};
-                updates[`items/${key}/wtw_status`] = status;
+                if(status=="reset"){
+                    updates[`items/${key}/wtw_status`] = "";
+                    
+
+                }else{
+                    updates[`items/${key}/wtw_status`] = status=="true";
+
+                }
+                
 
                 update(ref(db), updates)
                     .then(() => {
@@ -206,7 +214,7 @@ const Page = () => {
 
     }
 
-    const updateSheetwtw = (date: string, title: string, current_status: boolean) => {
+    const updateSheetwtw = (date: string, title: string, current_status: string) => {
 
         const formattedDate = format(date, 'MMM yy');
         const params = {
@@ -275,12 +283,12 @@ const Page = () => {
                 //alert("Pleae assign a user");
                 // return; 
                 await updateDoc(userdocref, {
-                title: title,
+                    title: title,
 
-                current_status: current_status,
+                    current_status: current_status,
 
 
-            });
+                });
 
 
             }
@@ -288,20 +296,20 @@ const Page = () => {
             if (docSnap0.exists()) {
 
                 await updateDoc(userdocref0, {
-                title: title,
+                    title: title,
 
-                current_status: current_status,
+                    current_status: current_status,
 
 
-            });
-                
+                });
+
             }
 
 
 
 
-           
-            
+
+
             alert("Task added successfully!");
 
 
@@ -424,7 +432,6 @@ const Page = () => {
 
                                 <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title} </h2>
                                 <p className='w-[20%]   text-sm text-center whitespace-normal break-words max-h-[100px] overflow-clip '>{entry.mention}</p>
-                                <p className='w-[5%]  overflow-clip text-sm text-center'>
 
 
 
@@ -432,14 +439,46 @@ const Page = () => {
 
 
 
-                                    <input type='checkbox' checked={entry.wtw_status ? entry.wtw_status : false} onChange={(e) => updatedwtw_status(entry.title, e.target.checked, entry.date)} /></p>
-                                <p className='w-[15%]  overflow-clip text-sm text-center'><select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date, entry.id ? entry.id : '00')}>
-                                    <option value="">Select</option>
-                                    <option value="Working">Working</option>
-                                    <option value="No Post">No Post</option>
-                                    <option value="Pending Breakdown">Pending Breakdown</option>
-                                    <option value="Posted">Posted</option>
-                                </select></p>
+
+                                <div className='flex justify-center items-center gap-5 '>
+
+                                    <label className="custom-checkbox mt-1">
+                                        <input className={``}
+                                            type="checkbox"
+                                            checked={String(entry.wtw_status)=="false"}
+                                            onChange={(e) =>
+                                                updatedwtw_status(entry.title, String(e.target.checked), entry.date)
+                                            }
+                                        />
+                                        <span className="checkmark"></span>
+                                    </label>
+
+
+                                    <input className='w-[20px] h-[20px]' type='checkbox' checked={entry.wtw_status ? true : false} onChange={(e) => updatedwtw_status(entry.title, String( e.target.checked), entry.date)} />
+                                   
+                                   <p className='cursor-pointer' onClick={()=>{updatedwtw_status(entry.title, 'reset', entry.date)}}>↺</p>
+                                   
+                                    {/* <input className={`${entry.wtw_status?"":"hidden"}`} type='checkbox' checked={entry.wtw_status ? entry.wtw_status : false} onChange={(e) => updatedwtw_status(entry.title, e.target.checked, entry.date)} />
+
+                                   
+                                    <select className='bg-transparent focus:ring-0 focus:outline-0 text-xs text-white '  value={entry.sm_status ? "true" : "false"} onChange={(e) => {updatedwtw_status(entry.title, e.target.value==='t', entry.date) }}>
+                                        <option value=""> </option>
+                                        <option value="nowtw">Not for WTW</option>
+                                    </select> */}
+                                </div>
+
+
+
+
+
+                                <p className='w-[15%]  overflow-clip text-sm text-center'>
+                                    <select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date, entry.id ? entry.id : '00')}>
+                                        <option value="">Select</option>
+                                        <option value="Working">Working</option>
+                                        <option value="No Post">No Post</option>
+                                        <option value="Pending Breakdown">Pending Breakdown</option>
+                                        <option value="Posted">Posted</option>
+                                    </select></p>
                             </div>
 
                             {/* mobile scree */}
