@@ -34,6 +34,24 @@ const Page = () => {
 
     }, [])
 
+    const letterColors = {
+        A: "bg-red-400",
+        B: "bg-blue-400",
+        C: "bg-green-400",
+        D: "bg-purple-400",
+        E: "bg-yellow-400",
+        F: "bg-pink-400",
+        // add more as needed
+    };
+    const colors = [
+        "bg-red-400",
+        "bg-blue-400",
+        "bg-green-400",
+        "bg-purple-400",
+        "bg-yellow-400",
+        "bg-pink-400",
+    ];
+
 
     const [username, setUsername] = useState<string | null>("null");
     useEffect(() => {
@@ -187,15 +205,15 @@ const Page = () => {
             snapshot.forEach((childSnapshot) => {
                 const key = childSnapshot.key;
                 const updates: Record<string, any> = {};
-                if(status=="reset"){
+                if (status == "reset") {
                     updates[`items/${key}/wtw_status`] = "";
-                    
 
-                }else{
-                    updates[`items/${key}/wtw_status`] = status=="true";
+
+                } else {
+                    updates[`items/${key}/wtw_status`] = status == "true";
 
                 }
-                
+
 
                 update(ref(db), updates)
                     .then(() => {
@@ -430,6 +448,24 @@ const Page = () => {
 
                                 <h1 className={`text-sm ${entry.sm_status === "Posted" ? "bg-green-200" : entry.sm_status === "Working" ? "bg-orange-200" : entry.sm_status === "No Post" ? "bg-red-200" : entry.sm_status === "Pending Breakdown" ? "bg-yellow-200" : "bg-white"}  rounded-xl p-2 text-left align-middle justify-start w-[15%]`}>{entry.category}</h1>
 
+                                <div className="flex -space-x-2">
+                                    {entry.assigned_to?.split(',').map((person, index) => {
+                                        const name = person.trim();
+                                        const letter = name.charAt(0).toUpperCase();
+                                        const color = colors[letter.charCodeAt(0) % colors.length];
+
+                                        return (
+                                            <h1
+                                                key={index}
+                                                title={name} // 👈 shows name on hover
+                                                className={`rounded-full ${color} w-5 h-5 flex items-center justify-center text-white cursor-pointer text-xs`}
+                                            >
+                                                {letter}
+                                            </h1>
+                                        );
+                                    })}
+                                </div>
+
                                 <h2 className='w-[20%] cursor-pointer  text-center whitespace-normal break-words  max-h-[100px] overflow-clip  text-sm' onClick={() => { manageeditform(entry) }}>{entry.title} </h2>
                                 <p className='w-[20%]   text-sm text-center whitespace-normal break-words max-h-[100px] overflow-clip '>{entry.mention}</p>
 
@@ -445,7 +481,7 @@ const Page = () => {
                                     <label className="custom-checkbox mt-1">
                                         <input className={``}
                                             type="checkbox"
-                                            checked={String(entry.wtw_status)=="false"}
+                                            checked={String(entry.wtw_status) == "false"}
                                             onChange={(e) =>
                                                 updatedwtw_status(entry.title, String(e.target.checked), entry.date)
                                             }
@@ -454,10 +490,10 @@ const Page = () => {
                                     </label>
 
 
-                                    <input className='w-[20px] h-[20px]' type='checkbox' checked={entry.wtw_status ? true : false} onChange={(e) => updatedwtw_status(entry.title, String( e.target.checked), entry.date)} />
-                                   
-                                   <p className='cursor-pointer' onClick={()=>{updatedwtw_status(entry.title, 'reset', entry.date)}}>↺</p>
-                                   
+                                    <input className='w-[20px] h-[20px]' type='checkbox' checked={entry.wtw_status ? true : false} onChange={(e) => updatedwtw_status(entry.title, String(e.target.checked), entry.date)} />
+
+                                    <p className='cursor-pointer' onClick={() => { updatedwtw_status(entry.title, 'reset', entry.date) }}>↺</p>
+
                                     {/* <input className={`${entry.wtw_status?"":"hidden"}`} type='checkbox' checked={entry.wtw_status ? entry.wtw_status : false} onChange={(e) => updatedwtw_status(entry.title, e.target.checked, entry.date)} />
 
                                    
