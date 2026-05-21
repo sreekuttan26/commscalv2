@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.20",
+    "diff": "^9.0.0",
     "firebase": "^12.2.1",
     "formidable": "^3.5.4",
     "googleapis": "^168.0.0",

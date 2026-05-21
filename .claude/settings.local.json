@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"d:\\\\01_Comms\\\\My Programming\\\\Comms SM Cal\\\\comms cal_\\\\commscalv2\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)"
+    ]
+  }
+}

@@ -10,8 +10,8 @@ import { use, useCallback, useEffect, useState } from "react"
 export const nav_items = [
     { name: "Dashboard", href: "/", icon: "/dashboard.png"},
     { name: "My Tasks", href: "/task", icon: "/task.png" },
-    { name: "Database", href: "/database", icon: "/db.png"}, 
-    // { name: "SM Plan", href: "/sm", icon: "/sm_plan.png" },
+    { name: "Database", href: "/database", icon: "/db.png"},
+    { name: "SM Cal", href: "/smcal", icon: "/sm_plan.png" },
     // { name: "Website", href: "/website", icon: "/website.png" },
     { name: "Google sheet", href: "https://docs.google.com/spreadsheets/d/18I8QnxgKxle1-pA6Cw9_VEa6hnTk_nzAApl_IV194hc/edit?", icon: "/gs.png" },
 ]

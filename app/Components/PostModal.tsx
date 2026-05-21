@@ -1,0 +1,204 @@
+'use client'
+import { useState } from 'react'
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+  Timestamp,
+} from 'firebase/firestore'
+import { firestore } from '../firebase/firebase'
+import dayjs from '../../lib/dayjs'
+import { IST } from '../../lib/dayjs'
+
+interface CurrentUser {
+  uid: string
+  displayName: string | null
+  photoURL: string | null
+}
+
+interface Props {
+  user: CurrentUser | null
+  prefilledDate: string   // YYYY-MM-DD or ''
+  onClose: () => void
+}
+
+export default function PostModal({ user, prefilledDate, onClose }: Props) {
+  const defaultDT = prefilledDate
+    ? `${prefilledDate}T09:00`
+    : dayjs().tz(IST).format('YYYY-MM-DDTHH:mm')
+
+  const [title, setTitle] = useState('')
+  const [scheduledAt, setScheduledAt] = useState(defaultDT)
+  const [images, setImages] = useState<string[]>([''])
+  const [bodyCopy, setBodyCopy] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState('')
+
+  const addImage = () => setImages((p) => [...p, ''])
+  const removeImage = (i: number) =>
+    setImages((p) => p.filter((_, idx) => idx !== i))
+  const updateImage = (i: number, val: string) =>
+    setImages((p) => p.map((v, idx) => (idx === i ? val : v)))
+
+  const handleSubmit = async () => {
+    setError('')
+    if (!title.trim()) { setError('Title is required.'); return }
+    if (!scheduledAt) { setError('Scheduled date & time is required.'); return }
+    if (!user) { setError('You must be logged in.'); return }
+
+    setSubmitting(true)
+    try {
+      const scheduledDate = dayjs.tz(scheduledAt, IST).toDate()
+      await addDoc(collection(firestore, 'posts'), {
+        title: title.trim(),
+        bodyCopy: bodyCopy.trim(),
+        images: images.filter((u) => u.trim()),
+        scheduledAt: Timestamp.fromDate(scheduledDate),
+        status: 'draft',
+        createdBy: {
+          uid: user.uid,
+          name: user.displayName || 'User',
+          photoURL: user.photoURL || '',
+        },
+        createdAt: serverTimestamp(),
+        approvedBy: [],
+      })
+      onClose()
+    } catch (e) {
+      console.error(e)
+      setError('Failed to save. Please try again.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[92vh] flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 flex-shrink-0">
+          <h2 className="text-lg font-bold text-gray-800">New Post</h2>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center
+              justify-center text-gray-500 transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Form body */}
+        <div className="overflow-y-auto flex-1 px-6 py-5 space-y-5">
+          {/* Title */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Title <span className="text-red-500">*</span>
+            </label>
+            <input
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+              placeholder="Post title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          {/* Scheduled date & time */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Scheduled date & time (IST) <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="datetime-local"
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+              value={scheduledAt}
+              onChange={(e) => setScheduledAt(e.target.value)}
+            />
+          </div>
+
+          {/* Image links */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Image links (Google Drive)
+            </label>
+            <p className="text-xs text-gray-400 mb-2">
+              Paste Google Drive share links. Set each file to{' '}
+              <strong>Anyone with the link can view</strong> for previews to
+              work.
+            </p>
+            <div className="space-y-2">
+              {images.map((url, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+                    placeholder="https://drive.google.com/file/d/…"
+                    value={url}
+                    onChange={(e) => updateImage(i, e.target.value)}
+                  />
+                  {images.length > 1 && (
+                    <button
+                      onClick={() => removeImage(i)}
+                      className="w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-400
+                        flex items-center justify-center flex-shrink-0 transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+              <button
+                onClick={addImage}
+                className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700
+                  font-medium"
+              >
+                <span className="text-lg leading-none">+</span> Add image
+              </button>
+            </div>
+          </div>
+
+          {/* Body copy */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Body copy
+            </label>
+            <textarea
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent
+                resize-y min-h-[120px]"
+              placeholder="Write your post copy here…"
+              value={bodyCopy}
+              onChange={(e) => setBodyCopy(e.target.value)}
+            />
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">
+              {error}
+            </p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 flex-shrink-0">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 border
+              border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="px-5 py-2 text-sm bg-blue-600 text-white rounded-xl hover:bg-blue-700
+              disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors"
+          >
+            {submitting ? 'Creating…' : 'Create Post'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
