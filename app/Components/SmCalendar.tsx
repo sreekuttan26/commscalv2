@@ -201,6 +201,9 @@ export default function SmCalendar({ posts, onPostClick, onCellClick, onNewPost 
       const d = toISTDateStr(p.scheduledAt)
       ;(map[d] = map[d] || []).push(p)
     })
+    Object.values(map).forEach((arr) =>
+      arr.sort((a, b) => a.scheduledAt.toMillis() - b.scheduledAt.toMillis())
+    )
     return map
   }, [posts])
 
