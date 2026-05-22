@@ -14,7 +14,7 @@ import {
 } from 'firebase/firestore'
 import { firestore } from '../firebase/firebase'
 import type { SMPost, SMComment, HistoryEvent, PostActor } from '../smcal/types'
-import { convertDriveUrl } from '../../lib/driveUrl'
+import { convertDriveUrl, convertDriveUrlFull, getDriveDownloadUrl } from '../../lib/driveUrl'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import CommentThread from './CommentThread'
@@ -65,6 +65,9 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   // Image comment panel
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
 
+  // Lightbox
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+
   // Delete confirm
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -96,6 +99,12 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     )
     return () => unsub()
   }, [postId])
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxUrl(null) }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [])
 
   // ── Loading / not found ──────────────────────────────────────────────────────
   if (loading) {
@@ -482,11 +491,11 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                   const count     = unresolvedFor(`image:${i}`)
                   const isSelected = selectedImg === i
                   return (
-                    <div key={i} className="relative">
+                    <div key={i} className="relative group">
                       <div
                         onClick={() => setSelectedImg(isSelected ? null : i)}
                         className={`aspect-video rounded-xl overflow-hidden border-2 cursor-pointer
-                          transition-all
+                          relative transition-all
                           ${isSelected
                             ? 'border-blue-400 shadow-lg ring-2 ring-blue-200'
                             : 'border-gray-200 hover:border-blue-300'
@@ -508,6 +517,28 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                               </div>`
                           }}
                         />
+                        {/* View / Download overlay */}
+                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-center
+                          gap-2 px-2 py-2 bg-gradient-to-t from-black/60 to-transparent
+                          opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={(e) => { e.stopPropagation(); setLightboxUrl(url) }}
+                            className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
+                              bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
+                          >
+                            View
+                          </button>
+                          <a
+                            href={getDriveDownloadUrl(url)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
+                              bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
+                          >
+                            Download
+                          </a>
+                        </div>
                       </div>
                       {count > 0 && (
                         <span className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500
@@ -719,6 +750,29 @@ export default function PostDetail({ postId, user, onClose }: Props) {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Image lightbox ── */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center
+            bg-black/85 backdrop-blur-sm p-4"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            onClick={() => setLightboxUrl(null)}
+            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center
+              rounded-full bg-white/10 hover:bg-white/25 text-white text-lg transition-colors"
+            aria-label="Close"
+          >
+            ✕
+          </button>
+          <img
+            src={convertDriveUrlFull(lightboxUrl)}
+            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>
