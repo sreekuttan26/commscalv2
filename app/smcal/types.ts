@@ -52,6 +52,7 @@ export type HistoryEventType =
   | 'title_edit'
   | 'image_added'
   | 'image_removed'
+  | 'image_reordered'
   | 'schedule_changed'
   | 'status_changed'
   | 'approved'

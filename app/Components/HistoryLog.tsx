@@ -24,6 +24,8 @@ function eventLabel(event: HistoryEvent): string {
       return 'Added an image'
     case 'image_removed':
       return 'Removed an image'
+    case 'image_reordered':
+      return 'Reordered images'
     case 'schedule_changed':
       return `Rescheduled: ${event.before} → ${event.after}`
     case 'status_changed':
@@ -73,6 +75,35 @@ export default function HistoryLog({ history }: Props) {
                 <span className="text-green-600">{event.after}</span>
               </div>
             )}
+
+            {event.type === 'image_reordered' &&
+              event.before !== undefined &&
+              event.after !== undefined && (
+                <div className="mt-1 space-y-0.5">
+                  {(() => {
+                    try {
+                      const before: string[] = JSON.parse(event.before)
+                      const after:  string[] = JSON.parse(event.after)
+                      return after.map((url, i) => {
+                        const prev = before.indexOf(url)
+                        const moved = prev !== i
+                        return (
+                          <p key={i} className="text-[11px] text-gray-400 truncate">
+                            {i + 1}. {url.split('/').pop()?.slice(0, 40) ?? url}
+                            {moved && (
+                              <span className="ml-1.5 text-amber-500 font-medium">
+                                (was #{prev + 1})
+                              </span>
+                            )}
+                          </p>
+                        )
+                      })
+                    } catch {
+                      return null
+                    }
+                  })()}
+                </div>
+              )}
 
             {event.type === 'body_edit' &&
               event.before !== undefined &&

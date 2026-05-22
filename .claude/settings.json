@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(node -e \"require\\('d:/01_Comms/My Programming/Comms SM Cal/comms cal_/commscalv2/node_modules/googleapis'\\)\")"
     ]
   }
 }

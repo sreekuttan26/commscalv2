@@ -1,14 +1,16 @@
 'use client'
 import { useState } from 'react'
 import {
-  addDoc,
   collection,
+  doc,
   serverTimestamp,
+  setDoc,
   Timestamp,
 } from 'firebase/firestore'
 import { firestore } from '../firebase/firebase'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
+import ImageSlotList from './ImageSlotList'
 
 interface CurrentUser {
   uid: string
@@ -27,32 +29,29 @@ export default function PostModal({ user, prefilledDate, onClose }: Props) {
     ? `${prefilledDate}T09:00`
     : dayjs().tz(IST).format('YYYY-MM-DDTHH:mm')
 
-  const [title, setTitle] = useState('')
-  const [scheduledAt, setScheduledAt] = useState(defaultDT)
-  const [images, setImages] = useState<string[]>([''])
-  const [bodyCopy, setBodyCopy] = useState('')
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
+  // Generate a stable Firestore document ID on first render so uploads can use it
+  const [postId] = useState(() => doc(collection(firestore, 'posts')).id)
 
-  const addImage = () => setImages((p) => [...p, ''])
-  const removeImage = (i: number) =>
-    setImages((p) => p.filter((_, idx) => idx !== i))
-  const updateImage = (i: number, val: string) =>
-    setImages((p) => p.map((v, idx) => (idx === i ? val : v)))
+  const [title, setTitle]         = useState('')
+  const [scheduledAt, setScheduledAt] = useState(defaultDT)
+  const [imageUrls, setImageUrls] = useState<string[]>([''])
+  const [bodyCopy, setBodyCopy]   = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError]         = useState('')
 
   const handleSubmit = async () => {
     setError('')
-    if (!title.trim()) { setError('Title is required.'); return }
-    if (!scheduledAt) { setError('Scheduled date & time is required.'); return }
-    if (!user) { setError('You must be logged in.'); return }
+    if (!title.trim())  { setError('Title is required.'); return }
+    if (!scheduledAt)   { setError('Scheduled date & time is required.'); return }
+    if (!user)          { setError('You must be logged in.'); return }
 
     setSubmitting(true)
     try {
       const scheduledDate = dayjs.tz(scheduledAt, IST).toDate()
-      await addDoc(collection(firestore, 'posts'), {
+      await setDoc(doc(firestore, 'posts', postId), {
         title: title.trim(),
         bodyCopy: bodyCopy.trim(),
-        images: images.filter((u) => u.trim()),
+        images: imageUrls.filter((u) => u.trim()),
         scheduledAt: Timestamp.fromDate(scheduledDate),
         status: 'draft',
         createdBy: {
@@ -120,42 +119,18 @@ export default function PostModal({ user, prefilledDate, onClose }: Props) {
           {/* Image links */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Image links (Google Drive)
+              Images
             </label>
             <p className="text-xs text-gray-400 mb-2">
-              Paste Google Drive share links. Set each file to{' '}
-              <strong>Anyone with the link can view</strong> for previews to
-              work.
+              Paste a Google Drive link or click <strong>Upload</strong> to upload directly.
+              Uploaded files are shared automatically.
             </p>
-            <div className="space-y-2">
-              {images.map((url, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm
-                      focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
-                    placeholder="https://drive.google.com/file/d/…"
-                    value={url}
-                    onChange={(e) => updateImage(i, e.target.value)}
-                  />
-                  {images.length > 1 && (
-                    <button
-                      onClick={() => removeImage(i)}
-                      className="w-9 h-9 rounded-xl bg-red-50 hover:bg-red-100 text-red-400
-                        flex items-center justify-center flex-shrink-0 transition-colors"
-                    >
-                      ✕
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                onClick={addImage}
-                className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700
-                  font-medium"
-              >
-                <span className="text-lg leading-none">+</span> Add image
-              </button>
-            </div>
+            <ImageSlotList
+              initialUrls={imageUrls}
+              postId={postId}
+              postTitle={title}
+              onChange={setImageUrls}
+            />
           </div>
 
           {/* Body copy */}
@@ -174,9 +149,7 @@ export default function PostModal({ user, prefilledDate, onClose }: Props) {
           </div>
 
           {error && (
-            <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">
-              {error}
-            </p>
+            <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>
           )}
         </div>
 

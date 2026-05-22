@@ -19,6 +19,7 @@ import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import CommentThread from './CommentThread'
 import HistoryLog from './HistoryLog'
+import ImageSlotList from './ImageSlotList'
 
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -165,6 +166,12 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     setSaving(true)
     await updateDoc(doc(firestore, 'posts', postId), { title: titleDraft.trim() })
     await log('title_edit', post.title, titleDraft.trim())
+    // Rename the Drive subfolder to match the new title (fire-and-forget)
+    fetch('/api/rename-sm-folder', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ postId, newTitle: titleDraft.trim() }),
+    }).catch(() => {})
     setSaving(false); setEditingTitle(false)
   }
 
@@ -188,14 +195,19 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
   const saveImages = async () => {
     setSaving(true)
-    const trimmed  = imagesDraft.filter((u) => u.trim())
-    const oldSet   = new Set(post.images)
-    const newSet   = new Set(trimmed)
-    const added    = trimmed.filter((u) => !oldSet.has(u))
-    const removed  = post.images.filter((u) => !newSet.has(u))
+    const trimmed = imagesDraft.filter((u) => u.trim())
+    const oldSet  = new Set(post.images)
+    const newSet  = new Set(trimmed)
+    const added   = trimmed.filter((u) => !oldSet.has(u))
+    const removed = post.images.filter((u) => !newSet.has(u))
+    // Detect reorder: URLs that exist in both old and new, but in a different order
+    const oldKept = post.images.filter((u) => newSet.has(u))
+    const newKept = trimmed.filter((u) => oldSet.has(u))
+    const reordered = oldKept.length === newKept.length && oldKept.some((u, i) => u !== newKept[i])
     await updateDoc(doc(firestore, 'posts', postId), { images: trimmed })
     for (const url of added)   await log('image_added',   undefined, url)
     for (const url of removed) await log('image_removed', url, undefined)
+    if (reordered) await log('image_reordered', JSON.stringify(oldKept), JSON.stringify(newKept))
     setSaving(false); setEditingImages(false)
   }
 
@@ -253,7 +265,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     setEditingSchedule(true)
   }
   const startEditBody   = () => { setBodyDraft(post.bodyCopy || ''); setEditingBody(true) }
-  const startEditImages = () => { setImagesDraft([...(post.images || []), '']); setEditingImages(true) }
+  const startEditImages = () => { setImagesDraft([...(post.images || [])]); setEditingImages(true) }
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
@@ -450,39 +462,17 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           </div>
 
           {editingImages ? (
-            <div className="space-y-2">
-              <p className="text-xs text-gray-400">
-                Paste Google Drive share links. Set each file to{' '}
-                <strong>Anyone with the link can view</strong>.
+            <div>
+              <p className="text-xs text-gray-400 mb-2">
+                Paste a Google Drive link or click <strong>Upload</strong> to upload directly.
+                Uploaded files are shared automatically.
               </p>
-              {imagesDraft.map((url, i) => (
-                <div key={i} className="flex gap-2">
-                  <input
-                    className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm
-                      focus:outline-none focus:ring-2 focus:ring-blue-300"
-                    placeholder="https://drive.google.com/file/d/…"
-                    value={url}
-                    onChange={(e) => {
-                      const next = [...imagesDraft]
-                      next[i] = e.target.value
-                      setImagesDraft(next)
-                    }}
-                  />
-                  <button
-                    onClick={() => setImagesDraft((p) => p.filter((_, idx) => idx !== i))}
-                    className="w-9 h-9 flex items-center justify-center rounded-xl
-                      bg-red-50 hover:bg-red-100 text-red-400 flex-shrink-0"
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-              <button
-                onClick={() => setImagesDraft((p) => [...p, ''])}
-                className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700 font-medium"
-              >
-                <span className="text-lg leading-none">+</span> Add image
-              </button>
+              <ImageSlotList
+                initialUrls={imagesDraft}
+                postId={postId}
+                postTitle={post.title}
+                onChange={setImagesDraft}
+              />
             </div>
           ) : (post.images?.length ?? 0) > 0 ? (
             <>
