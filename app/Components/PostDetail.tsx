@@ -78,8 +78,10 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   // Share link
   const [copied, setCopied] = useState(false)
   const copyShareLink = () => {
-    const url = `${window.location.origin}/smcal/${postId}`
-    navigator.clipboard.writeText(url).then(() => {
+    const url      = `${window.location.origin}/smcal/${postId}`
+    const dateTime = formatIST(post.scheduledAt)
+    const text     = `${post.title} — ${dateTime}\n${url}`
+    navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
