@@ -132,11 +132,20 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
     fd.append('postTitle', postTitleRef.current || 'untitled')
 
     try {
-      const res  = await fetch('/api/upload-sm', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload failed')
+      const res = await fetch('/api/upload-sm', { method: 'POST', body: fd })
+
+      // Parse JSON safely — a 413 from Next.js/proxy arrives as plain text
+      let data: Record<string, unknown> = {}
+      try {
+        data = await res.json()
+      } catch {
+        if (res.status === 413) throw new Error('File is too large — please use a smaller image')
+        throw new Error(`Upload failed (HTTP ${res.status})`)
+      }
+
+      if (!res.ok) throw new Error((data.error as string) || 'Upload failed')
       setSlots((prev) =>
-        prev.map((s) => s.id === slotId ? { ...s, url: data.filelink, status: 'success' } : s)
+        prev.map((s) => s.id === slotId ? { ...s, url: data.filelink as string, status: 'success' } : s)
       )
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Upload failed — try again'
