@@ -35,6 +35,7 @@ export default function PostModal({ user, prefilledDate, onClose }: Props) {
   const [title, setTitle]         = useState('')
   const [scheduledAt, setScheduledAt] = useState(defaultDT)
   const [imageUrls, setImageUrls] = useState<string[]>([''])
+  const [docUrl,   setDocUrl]     = useState('')
   const [bodyCopy, setBodyCopy]   = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]         = useState('')
@@ -52,6 +53,7 @@ export default function PostModal({ user, prefilledDate, onClose }: Props) {
         title: title.trim(),
         bodyCopy: bodyCopy.trim(),
         images: imageUrls.filter((u) => u.trim()),
+        docUrl: docUrl.trim(),
         scheduledAt: Timestamp.fromDate(scheduledDate),
         status: 'draft',
         createdBy: {
@@ -130,6 +132,20 @@ export default function PostModal({ user, prefilledDate, onClose }: Props) {
               postId={postId}
               postTitle={title}
               onChange={setImageUrls}
+            />
+          </div>
+
+          {/* Document URL */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Document URL
+            </label>
+            <input
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm
+                focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent"
+              placeholder="https://docs.google.com/…"
+              value={docUrl}
+              onChange={(e) => setDocUrl(e.target.value)}
             />
           </div>
 

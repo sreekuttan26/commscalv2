@@ -20,6 +20,8 @@ function eventLabel(event: HistoryEvent): string {
       return `Changed title`
     case 'body_edit':
       return 'Edited body copy'
+    case 'doc_url_edit':
+      return 'Updated document URL'
     case 'image_added':
       return 'Added an image'
     case 'image_removed':
@@ -73,6 +75,23 @@ export default function HistoryLog({ history }: Props) {
                 <span className="line-through text-red-400">{event.before}</span>
                 <span className="mx-2 text-gray-300">→</span>
                 <span className="text-green-600">{event.after}</span>
+              </div>
+            )}
+
+            {event.type === 'doc_url_edit' && event.after !== undefined && (
+              <div className="mt-1 text-xs">
+                {event.after ? (
+                  <a
+                    href={event.after}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline break-all"
+                  >
+                    {event.after}
+                  </a>
+                ) : (
+                  <span className="text-gray-400 italic">removed</span>
+                )}
               </div>
             )}
 

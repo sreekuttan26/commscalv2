@@ -20,6 +20,7 @@ export type SMPost = {
   title: string
   bodyCopy: string
   images: string[]
+  docUrl?: string
   scheduledAt: Timestamp
   status: PostStatus
   createdBy: PostActor
@@ -53,6 +54,7 @@ export type HistoryEventType =
   | 'image_added'
   | 'image_removed'
   | 'image_reordered'
+  | 'doc_url_edit'
   | 'schedule_changed'
   | 'status_changed'
   | 'approved'

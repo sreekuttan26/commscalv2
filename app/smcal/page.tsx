@@ -34,10 +34,10 @@ export default function SmCalPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
+    <div className="flex h-dvh overflow-hidden bg-gray-50">
       <Navbar current_page="SM Cal" />
 
-      <div className="flex-1 overflow-auto p-4">
+      <div className="flex-1 overflow-auto p-2 sm:p-4">
         <SmCalendar
           posts={posts}
           onPostClick={(id) => setSelectedPostId(id)}

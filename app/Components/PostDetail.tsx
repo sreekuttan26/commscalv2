@@ -62,6 +62,8 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [bodyDraft,       setBodyDraft]       = useState('')
   const [editingImages,   setEditingImages]   = useState(false)
   const [imagesDraft,     setImagesDraft]     = useState<string[]>([])
+  const [editingDocUrl,   setEditingDocUrl]   = useState(false)
+  const [docUrlDraft,     setDocUrlDraft]     = useState('')
 
   // Image comment panel
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
@@ -72,6 +74,16 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   // Delete confirm
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Share link
+  const [copied, setCopied] = useState(false)
+  const copyShareLink = () => {
+    const url = `${window.location.origin}/smcal/${postId}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
 
   // ── Firestore listeners ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -212,6 +224,15 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     setSaving(false); setEditingImages(false)
   }
 
+  const saveDocUrl = async () => {
+    const trimmed = docUrlDraft.trim()
+    if (trimmed === (post.docUrl || '')) { setEditingDocUrl(false); return }
+    setSaving(true)
+    await updateDoc(doc(firestore, 'posts', postId), { docUrl: trimmed })
+    await log('doc_url_edit', post.docUrl || '', trimmed)
+    setSaving(false); setEditingDocUrl(false)
+  }
+
   // ── Approve / revoke ─────────────────────────────────────────────────────────
   const toggleApprove = async () => {
     if (myApproval) {
@@ -268,6 +289,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   }
   const startEditBody   = () => { setBodyDraft(post.bodyCopy || ''); setEditingBody(true) }
   const startEditImages = () => { setImagesDraft([...(post.images || [])]); setEditingImages(true) }
+  const startEditDocUrl = () => { setDocUrlDraft(post.docUrl || ''); setEditingDocUrl(true) }
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
@@ -332,6 +354,16 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           >
             {cfg.icon} {cfg.label}
           </span>
+
+          <button
+            onClick={copyShareLink}
+            title="Copy shareable link"
+            className="flex-shrink-0 text-xs px-3 py-1.5 rounded-lg border border-gray-200
+              bg-gray-50 hover:bg-gray-100 text-gray-500 hover:text-gray-700
+              transition-colors whitespace-nowrap"
+          >
+            {copied ? '✓ Copied' : '🔗 Share'}
+          </button>
         </div>
       </div>
 
@@ -429,6 +461,65 @@ export default function PostDetail({ postId, user, onClose }: Props) {
               </div>
             </div>
           )}
+
+          {/* Document URL */}
+          <div className="sm:col-span-2">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">
+              Document URL
+            </p>
+            {editingDocUrl ? (
+              <div className="flex items-center gap-2 flex-wrap">
+                <input
+                  className="flex-1 min-w-0 border border-blue-300 rounded-lg px-2 py-1.5
+                    text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  placeholder="https://docs.google.com/…"
+                  value={docUrlDraft}
+                  onChange={(e) => setDocUrlDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') saveDocUrl()
+                    if (e.key === 'Escape') setEditingDocUrl(false)
+                  }}
+                  autoFocus
+                />
+                <button
+                  onClick={saveDocUrl}
+                  disabled={saving}
+                  className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-lg
+                    hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingDocUrl(false)}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                {post.docUrl ? (
+                  <a
+                    href={post.docUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline break-all"
+                  >
+                    {post.docUrl}
+                  </a>
+                ) : (
+                  <p className="text-sm text-gray-400 italic">No document linked.</p>
+                )}
+                <button
+                  onClick={startEditDocUrl}
+                  className="text-gray-300 hover:text-gray-600 flex-shrink-0 text-base"
+                  title="Edit document URL"
+                >
+                  ✎
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Images ── */}
