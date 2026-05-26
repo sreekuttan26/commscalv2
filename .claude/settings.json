@@ -6,10 +6,12 @@
       "Bash(node -e \"require\\('d:/01_Comms/My Programming/Comms SM Cal/comms cal_/commscalv2/node_modules/googleapis'\\)\")",
       "Bash(node -e \"console.log\\(require\\('./package.json'\\).dependencies.next\\)\")",
       "Bash(mkdir \"d:/01_Comms/My Programming/Comms SM Cal/comms cal_/commscalv2/app/smcal/[postId]\")",
-      "Bash(node -e \"console.log\\(require\\('./node_modules/tailwindcss/package.json'\\).version\\)\")"
+      "Bash(node -e \"console.log\\(require\\('./node_modules/tailwindcss/package.json'\\).version\\)\")",
+      "Bash(New-Item -ItemType Directory -Force \"d:\\\\01_Comms\\\\My Programming\\\\Comms SM Cal\\\\comms cal_\\\\commscalv2\\\\app\\\\api\\\\og-image\\\\[postId]\")"
     ],
     "additionalDirectories": [
-      "d:\\01_Comms\\My Programming\\Comms SM Cal\\comms cal_\\commscalv2\\app\\smcal"
+      "d:\\01_Comms\\My Programming\\Comms SM Cal\\comms cal_\\commscalv2\\app\\smcal",
+      "d:\\01_Comms\\My Programming\\Comms SM Cal\\comms cal_\\commscalv2\\app\\api\\og-image"
     ]
   }
 }

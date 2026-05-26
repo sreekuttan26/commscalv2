@@ -9,10 +9,12 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@opentelemetry/api": "^1.9.1",
     "date-fns": "^4.1.0",
     "dayjs": "^1.11.20",
     "diff": "^9.0.0",
     "firebase": "^12.2.1",
+    "firebase-admin": "^13.10.0",
     "formidable": "^3.5.4",
     "googleapis": "^168.0.0",
     "next": "^15.5.9",

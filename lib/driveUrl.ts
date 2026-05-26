@@ -1,14 +1,19 @@
 const DRIVE_PATTERNS = [
   /\/file\/d\/([a-zA-Z0-9_-]+)/,
+  /\/d\/([a-zA-Z0-9_-]+)/,
   /[?&]id=([a-zA-Z0-9_-]+)/,
 ]
 
-function extractDriveId(url: string): string | null {
+export function extractDriveFileId(url: string): string | null {
   for (const pattern of DRIVE_PATTERNS) {
     const match = url.match(pattern)
     if (match?.[1]) return match[1]
   }
   return null
+}
+
+function extractDriveId(url: string): string | null {
+  return extractDriveFileId(url)
 }
 
 // Returns a thumbnail URL safe for use in <img src="...">
