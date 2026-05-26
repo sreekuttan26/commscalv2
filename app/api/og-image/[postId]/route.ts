@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
-import { adminDb } from '../../../../lib/firebaseAdmin'
+import { getAdminDb } from '../../../../lib/firebaseAdmin'
 import { extractDriveFileId } from '../../../../lib/driveUrl'
 
 export async function GET(
@@ -18,7 +18,7 @@ export async function GET(
 
   try {
     // Fetch post from Firestore via Admin SDK
-    const snap = await adminDb.collection('posts').doc(postId).get()
+    const snap = await getAdminDb().collection('posts').doc(postId).get()
     if (!snap.exists) {
       return new NextResponse('Not found', { status: 404 })
     }

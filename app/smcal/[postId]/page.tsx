@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { adminDb } from '../../../lib/firebaseAdmin'
+import { getAdminDb } from '../../../lib/firebaseAdmin'
 import { extractDriveFileId } from '../../../lib/driveUrl'
 import PostPageClient from './PostPageClient'
 
@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? ''
 
   try {
-    const snap = await adminDb.collection('posts').doc(postId).get()
+    const snap = await getAdminDb().collection('posts').doc(postId).get()
     if (!snap.exists) {
       return { title: 'Post not found' }
     }
