@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
-import { getAdminDb } from '../../../../lib/firebaseAdmin'
-import { extractDriveFileId } from '../../../../lib/driveUrl'
+import { adminDb } from '@/lib/firebaseAdmin'
+import { extractDriveFileId } from '@/lib/driveUrl'
 
 export async function GET(
   _req: NextRequest,
@@ -13,28 +13,26 @@ export async function GET(
   const PRIVATE_KEY  = process.env.GOOGLE_DRIVE_PRIVATE_KEY
 
   if (!CLIENT_EMAIL || !PRIVATE_KEY) {
-    return new NextResponse('Server misconfiguration', { status: 500 })
+    return NextResponse.json({ error: 'Server misconfiguration' }, { status: 500 })
   }
 
   try {
-    // Fetch post from Firestore via Admin SDK
-    const snap = await getAdminDb().collection('posts').doc(postId).get()
-    if (!snap.exists) {
-      return new NextResponse('Not found', { status: 404 })
+    const docSnap = await adminDb.collection('posts').doc(postId).get()
+    if (!docSnap.exists) {
+      return NextResponse.json({ error: 'Post not found' }, { status: 404 })
     }
 
-    const data   = snap.data() as { images?: string[] }
-    const images = data.images ?? []
-    if (images.length === 0) {
-      return new NextResponse('No image', { status: 404 })
+    const post       = docSnap.data() as { images?: string[] }
+    const firstImage = post.images?.[0]
+    if (!firstImage) {
+      return NextResponse.json({ error: 'No image' }, { status: 404 })
     }
 
-    const fileId = extractDriveFileId(images[0])
+    const fileId = extractDriveFileId(firstImage)
     if (!fileId) {
-      return new NextResponse('Cannot resolve Drive file ID', { status: 400 })
+      return NextResponse.json({ error: 'Invalid Drive URL' }, { status: 400 })
     }
 
-    // Download image bytes from Drive using service account
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: CLIENT_EMAIL,
@@ -44,29 +42,27 @@ export async function GET(
     })
     const drive = google.drive({ version: 'v3', auth })
 
-    const metaRes = await drive.files.get({
+    const meta = await drive.files.get({
       fileId,
       fields: 'mimeType',
       supportsAllDrives: true,
     })
-    const mimeType = metaRes.data.mimeType ?? 'image/jpeg'
+    const mimeType = meta.data.mimeType ?? 'image/jpeg'
 
-    const dlRes = await drive.files.get(
+    const fileRes = await drive.files.get(
       { fileId, alt: 'media', supportsAllDrives: true },
       { responseType: 'arraybuffer' },
     )
 
-    const buffer = Buffer.from(dlRes.data as ArrayBuffer)
-
-    return new NextResponse(buffer, {
+    return new NextResponse(Buffer.from(fileRes.data as ArrayBuffer), {
       status: 200,
       headers: {
         'Content-Type':  mimeType,
-        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=3600',
+        'Cache-Control': 'public, max-age=3600, s-maxage=86400',
       },
     })
   } catch (err) {
-    console.error('[og-image] error:', err)
-    return new NextResponse('Internal error', { status: 500 })
+    console.error('[og-image] error for post', postId, err)
+    return NextResponse.json({ error: 'Failed to fetch image' }, { status: 500 })
   }
 }
