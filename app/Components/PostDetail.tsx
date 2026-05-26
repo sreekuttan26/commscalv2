@@ -99,7 +99,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
   useEffect(() => {
     const unsub = onSnapshot(
-      collection(firestore, 'posts', postId, 'comments'),
+      query(collection(firestore, 'posts', postId, 'comments'), orderBy('createdAt', 'asc')),
       (snap) => setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() } as SMComment)))
     )
     return () => unsub()

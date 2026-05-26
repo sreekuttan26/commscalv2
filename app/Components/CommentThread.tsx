@@ -6,7 +6,7 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
-  Timestamp,
+  type Timestamp,
   updateDoc,
 } from 'firebase/firestore'
 import { firestore } from '../firebase/firebase'
@@ -93,7 +93,7 @@ export default function CommentThread({
       name: currentUser.displayName || 'User',
       photo: currentUser.photoURL || '',
       text,
-      createdAt: Timestamp.now(),
+      createdAt: serverTimestamp() as unknown as Timestamp,
     }
     await updateDoc(doc(firestore, 'posts', postId, 'comments', comment.id), {
       replies: [...(comment.replies || []), reply],
@@ -190,7 +190,11 @@ export default function CommentThread({
               {/* Nested replies */}
               {(comment.replies || []).length > 0 && (
                 <div className="mt-2 ml-1 space-y-2 border-l-2 border-gray-100 pl-3">
-                  {comment.replies.map((reply, i) => (
+                  {[...(comment.replies)].sort((a, b) => {
+                    const aMs = a.createdAt?.toMillis?.() ?? (a.createdAt as unknown as { seconds: number })?.seconds ?? 0
+                    const bMs = b.createdAt?.toMillis?.() ?? (b.createdAt as unknown as { seconds: number })?.seconds ?? 0
+                    return aMs - bMs
+                  }).map((reply, i) => (
                     <div key={i}>
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] font-semibold text-gray-600">
