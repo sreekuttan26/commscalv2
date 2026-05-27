@@ -6,7 +6,7 @@ import {
   deleteDoc,
   doc,
   serverTimestamp,
-  type Timestamp,
+  Timestamp,
   updateDoc,
 } from 'firebase/firestore'
 import { firestore } from '../firebase/firebase'
@@ -93,7 +93,7 @@ export default function CommentThread({
       name: currentUser.displayName || 'User',
       photo: currentUser.photoURL || '',
       text,
-      createdAt: serverTimestamp() as unknown as Timestamp,
+      createdAt: Timestamp.now(),
     }
     await updateDoc(doc(firestore, 'posts', postId, 'comments', comment.id), {
       replies: [...(comment.replies || []), reply],
