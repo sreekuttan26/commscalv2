@@ -34,6 +34,8 @@ export type CommentReply = {
   photo: string
   text: string
   createdAt: Timestamp
+  editedAt?: Timestamp | null
+  editHistory?: Array<{ text: string; editedAt: Timestamp }>
 }
 
 export type SMComment = {
@@ -46,6 +48,8 @@ export type SMComment = {
   createdAt: Timestamp
   resolved: boolean
   replies: CommentReply[]
+  editedAt?: Timestamp | null
+  editHistory?: Array<{ text: string; editedAt: Timestamp }>
 }
 
 export type HistoryEventType =
@@ -60,6 +64,8 @@ export type HistoryEventType =
   | 'approved'
   | 'approval_reverted'
   | 'comment_resolved'
+  | 'comment_edited'
+  | 'comment_unresolved'
 
 export type HistoryEvent = {
   id?: string
@@ -68,4 +74,5 @@ export type HistoryEvent = {
   timestamp: Timestamp
   before?: string
   after?: string
+  target?: string
 }

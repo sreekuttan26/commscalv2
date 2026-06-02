@@ -8,10 +8,10 @@ import { IST } from '../../lib/dayjs'
 
 // ── Status visual config ───────────────────────────────────────────────────────
 const STATUS_CFG = {
-  draft:     { dot: 'bg-gray-400',    card: 'bg-gray-50   border-gray-200',  badge: 'bg-gray-100   text-gray-600  border-gray-200',  label: 'Draft'     },
-  scheduled: { dot: 'bg-blue-500',    card: 'bg-blue-50   border-blue-200',  badge: 'bg-blue-100   text-blue-700  border-blue-200',  label: 'Scheduled' },
-  approved:  { dot: 'bg-green-500',   card: 'bg-green-50  border-green-200', badge: 'bg-green-100  text-green-700 border-green-200', label: 'Approved'  },
-  posted:    { dot: 'bg-purple-500',  card: 'bg-purple-50 border-purple-200',badge: 'bg-purple-100 text-purple-700 border-purple-200',label: 'Posted'    },
+  draft:     { dot: 'bg-gray-400',    card: 'bg-gray-50    border-gray-200',   badge: 'bg-gray-100   text-gray-600   border-gray-200',   label: 'Draft'     },
+  scheduled: { dot: 'bg-purple-500',  card: 'bg-purple-50  border-purple-200', badge: 'bg-purple-100 text-purple-700  border-purple-200', label: 'Scheduled' },
+  approved:  { dot: 'bg-blue-500',    card: 'bg-blue-50    border-blue-200',   badge: 'bg-blue-100   text-blue-700   border-blue-200',   label: 'Approved'  },
+  posted:    { dot: 'bg-green-500',   card: 'bg-green-50   border-green-200',  badge: 'bg-green-100  text-green-700  border-green-200',  label: 'Posted'    },
 } as const
 
 const DAY_HEADERS       = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']

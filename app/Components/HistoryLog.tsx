@@ -37,7 +37,11 @@ function eventLabel(event: HistoryEvent): string {
     case 'approval_reverted':
       return 'Revoked their approval'
     case 'comment_resolved':
-      return 'Resolved a comment'
+      return 'Resolved a comment thread'
+    case 'comment_edited':
+      return 'Edited a comment'
+    case 'comment_unresolved':
+      return 'Reopened a resolved comment thread'
     default:
       return 'Made a change'
   }
@@ -124,7 +128,7 @@ export default function HistoryLog({ history }: Props) {
                 </div>
               )}
 
-            {event.type === 'body_edit' &&
+            {(event.type === 'body_edit' || event.type === 'comment_edited') &&
               event.before !== undefined &&
               event.after !== undefined && (
                 <div className="mt-2">

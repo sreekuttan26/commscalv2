@@ -23,10 +23,10 @@ import ImageSlotList from './ImageSlotList'
 
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CFG = {
-  draft:     { badge: 'bg-gray-100   text-gray-600  border-gray-200',  icon: '✏️',  label: 'Draft'     },
-  scheduled: { badge: 'bg-blue-100   text-blue-700  border-blue-200',  icon: '🕐', label: 'Scheduled' },
-  approved:  { badge: 'bg-green-100  text-green-700 border-green-200', icon: '✓',  label: 'Approved'  },
-  posted:    { badge: 'bg-purple-100 text-purple-700 border-purple-200',icon: '📤', label: 'Posted'    },
+  draft:     { badge: 'bg-gray-100   text-gray-600   border-gray-200',   icon: '✏️',  label: 'Draft'     },
+  scheduled: { badge: 'bg-purple-100 text-purple-700 border-purple-200', icon: '🕐', label: 'Scheduled' },
+  approved:  { badge: 'bg-blue-100   text-blue-700   border-blue-200',   icon: '✓',  label: 'Approved'  },
+  posted:    { badge: 'bg-green-100  text-green-700  border-green-200',  icon: '📤', label: 'Posted'    },
 } as const
 
 interface CurrentUser {
@@ -743,7 +743,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
         <section className="border-t border-gray-100 pt-6">
           <h2 className="text-base font-bold text-gray-800 mb-3">Actions</h2>
           <div className="flex flex-wrap gap-3">
-            {/* Approve / revoke — available to all signed-in users */}
+            {/* Approve / revoke — universal */}
             <button
               onClick={toggleApprove}
               disabled={!user}
@@ -756,41 +756,47 @@ export default function PostDetail({ postId, user, onClose }: Props) {
               {myApproval ? '✓ Approved — click to revoke' : 'Approve'}
             </button>
 
-            {/* Creator-only actions */}
+            {/* Mark as Posted: creator always; any user once post is approved/posted */}
+            {user && (isCreator || post.status === 'approved' || post.status === 'posted') && post.status !== 'posted' && (
+              <button
+                onClick={() => setStatus('posted')}
+                disabled={!hasApproval}
+                title={!hasApproval ? 'Requires at least one approval' : undefined}
+                className="px-4 py-2 rounded-xl text-sm font-medium border
+                  bg-green-50 text-green-700 border-green-200 hover:bg-green-100
+                  transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                  disabled:hover:bg-green-50"
+              >
+                Mark as Posted
+              </button>
+            )}
+
+            {/* Set to Scheduled: creator always; any user once post is approved/posted */}
+            {user && (isCreator || post.status === 'approved' || post.status === 'posted') && post.status !== 'scheduled' && (
+              <button
+                onClick={() => setStatus('scheduled')}
+                disabled={!hasApproval}
+                title={!hasApproval ? 'Requires at least one approval' : undefined}
+                className="px-4 py-2 rounded-xl text-sm font-medium border
+                  bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100
+                  transition-all disabled:opacity-40 disabled:cursor-not-allowed
+                  disabled:hover:bg-purple-50"
+              >
+                Set to Scheduled
+              </button>
+            )}
+
+            {/* Approval warning — for anyone who can see the above buttons */}
+            {user && (isCreator || post.status === 'approved' || post.status === 'posted') && !hasApproval && (
+              <p className="w-full text-xs text-amber-600 bg-amber-50 border border-amber-200
+                rounded-xl px-3 py-2 mt-1">
+                Scheduling and posting require at least one approval.
+              </p>
+            )}
+
+            {/* Creator-only: revert to draft + delete */}
             {isCreator && (
               <>
-                {post.status !== 'posted' && (
-                  <button
-                    onClick={() => setStatus('posted')}
-                    disabled={!hasApproval}
-                    title={!hasApproval ? 'Requires at least one approval' : undefined}
-                    className="px-4 py-2 rounded-xl text-sm font-medium border
-                      bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100
-                      transition-all disabled:opacity-40 disabled:cursor-not-allowed
-                      disabled:hover:bg-purple-50"
-                  >
-                    Mark as Posted
-                  </button>
-                )}
-                {post.status !== 'scheduled' && (
-                  <button
-                    onClick={() => setStatus('scheduled')}
-                    disabled={!hasApproval}
-                    title={!hasApproval ? 'Requires at least one approval' : undefined}
-                    className="px-4 py-2 rounded-xl text-sm font-medium border
-                      bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100
-                      transition-all disabled:opacity-40 disabled:cursor-not-allowed
-                      disabled:hover:bg-blue-50"
-                  >
-                    Set to Scheduled
-                  </button>
-                )}
-                {!hasApproval && (
-                  <p className="w-full text-xs text-amber-600 bg-amber-50 border border-amber-200
-                    rounded-xl px-3 py-2 mt-1">
-                    Scheduling and posting require at least one approval.
-                  </p>
-                )}
                 {post.status !== 'draft' && (
                   <button
                     onClick={() => setStatus('draft')}
