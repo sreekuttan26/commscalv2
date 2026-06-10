@@ -6,25 +6,39 @@ import {
   serverTimestamp,
   setDoc,
   Timestamp,
+  updateDoc,
 } from 'firebase/firestore'
 import { firestore } from '../firebase/firebase'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import ImageSlotList from './ImageSlotList'
+import { useUsers } from '../constants'
+import { notify } from '../../lib/notifications'
 
 interface CurrentUser {
   uid: string
   displayName: string | null
   photoURL: string | null
+  email: string | null
+}
+
+export interface TaskPrefill {
+  taskId: string
+  title: string
+  bodyCopy: string
+  assignedTo: string
+  assignedToName: string
 }
 
 interface Props {
   user: CurrentUser | null
   prefilledDate: string   // YYYY-MM-DD or ''
   onClose: () => void
+  taskPrefill?: TaskPrefill
 }
 
-export default function PostModal({ user, prefilledDate, onClose }: Props) {
+export default function PostModal({ user, prefilledDate, onClose, taskPrefill }: Props) {
+  const { users } = useUsers()
   const defaultDT = prefilledDate
     ? `${prefilledDate}T09:00`
     : dayjs().tz(IST).format('YYYY-MM-DDTHH:mm')
@@ -32,13 +46,16 @@ export default function PostModal({ user, prefilledDate, onClose }: Props) {
   // Generate a stable Firestore document ID on first render so uploads can use it
   const [postId] = useState(() => doc(collection(firestore, 'posts')).id)
 
-  const [title, setTitle]         = useState('')
+  const [title, setTitle]         = useState(taskPrefill?.title ?? '')
   const [scheduledAt, setScheduledAt] = useState(defaultDT)
   const [imageUrls, setImageUrls] = useState<string[]>([''])
   const [docUrl,   setDocUrl]     = useState('')
-  const [bodyCopy, setBodyCopy]   = useState('')
+  const [bodyCopy, setBodyCopy]   = useState(taskPrefill?.bodyCopy ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]         = useState('')
+
+  const assignedTo     = taskPrefill?.assignedTo || user?.email || ''
+  const assignedToName = taskPrefill?.assignedToName || user?.displayName || 'User'
 
   const handleSubmit = async () => {
     setError('')
@@ -60,10 +77,46 @@ export default function PostModal({ user, prefilledDate, onClose }: Props) {
           uid: user.uid,
           name: user.displayName || 'User',
           photoURL: user.photoURL || '',
+          email: user.email || '',
         },
         createdAt: serverTimestamp(),
         approvedBy: [],
+        assignedTo,
+        assignedToName,
+        ...(taskPrefill ? { sourceTaskId: taskPrefill.taskId } : {}),
       })
+
+      const actor = {
+        email: user.email || '',
+        name: user.displayName || 'User',
+        photoURL: user.photoURL || '',
+      }
+
+      if (taskPrefill) {
+        await updateDoc(doc(firestore, 'tasks', taskPrefill.taskId), {
+          linkedSmPostId: postId,
+        })
+
+        const adminEmails = users.filter((u) => u.role === 'admin').map((u) => u.email)
+        await notify({
+          recipients: adminEmails,
+          actor,
+          type: 'post_created',
+          postId,
+          postTitle: title.trim(),
+          message: `${actor.name} created a new post "${title.trim()}"`,
+        })
+
+        await notify({
+          recipients: [assignedTo],
+          actor,
+          type: 'post_assigned',
+          postId,
+          postTitle: title.trim(),
+          message: `${actor.name} assigned you to "${title.trim()}"`,
+        })
+      }
+
       onClose()
     } catch (e) {
       console.error(e)

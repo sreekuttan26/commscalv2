@@ -14,11 +14,13 @@ import { firestore } from '../firebase/firebase'
 import type { SMComment, CommentReply, HistoryEventType } from '../smcal/types'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
+import { notify } from '../../lib/notifications'
 
 interface CurrentUser {
   uid: string
   displayName: string | null
   photoURL: string | null
+  email: string | null
 }
 
 interface Props {
@@ -26,9 +28,12 @@ interface Props {
   target: string         // "body" | "image:0" | "image:1" …
   comments: SMComment[]
   currentUser: CurrentUser | null
-  isCreator: boolean
+  isAssignee: boolean
   title?: string
   onClose?: () => void
+  postTitle: string
+  creatorEmail?: string
+  assigneeEmail?: string
 }
 
 function Avatar({ name, size = 6 }: { name: string; size?: number }) {
@@ -65,9 +70,12 @@ export default function CommentThread({
   target,
   comments,
   currentUser,
-  isCreator,
+  isAssignee,
   title,
   onClose,
+  postTitle,
+  creatorEmail,
+  assigneeEmail,
 }: Props) {
   const [newText,      setNewText]      = useState('')
   const [replyDrafts,  setReplyDrafts]  = useState<Record<string, string>>({})
@@ -82,6 +90,12 @@ export default function CommentThread({
 
   const unresolved = comments.filter((c) => !c.resolved)
   const resolved   = comments.filter((c) => c.resolved)
+
+  const notifyActor = {
+    email:    currentUser?.email || '',
+    name:     currentUser?.displayName || 'User',
+    photoURL: currentUser?.photoURL || '',
+  }
 
   // ── History logger ─────────────────────────────────────────────────────────
   const logHistory = async (type: HistoryEventType, before?: string, after?: string) => {
@@ -110,10 +124,20 @@ export default function CommentThread({
         authorUid:   currentUser.uid,
         authorName:  currentUser.displayName || 'User',
         authorPhoto: currentUser.photoURL || '',
+        authorEmail: currentUser.email || '',
         text:        newText.trim(),
         createdAt:   serverTimestamp(),
         resolved:    false,
         replies:     [],
+      })
+      const previousCommenters = comments.map((c) => c.authorEmail).filter((e): e is string => !!e)
+      await notify({
+        recipients: [creatorEmail, assigneeEmail, ...previousCommenters],
+        actor: notifyActor,
+        type: 'comment_added',
+        postId,
+        postTitle,
+        message: `${notifyActor.name} commented on "${postTitle}"`,
       })
       setNewText('')
     } finally {
@@ -131,10 +155,21 @@ export default function CommentThread({
       photo:     currentUser.photoURL || '',
       text,
       createdAt: Timestamp.now(),
+      authorEmail: currentUser.email || '',
     }
     await updateDoc(doc(firestore, 'posts', postId, 'comments', comment.id), {
       replies: [...(comment.replies || []), reply],
     })
+    if (comment.authorEmail) {
+      await notify({
+        recipients: [comment.authorEmail],
+        actor: notifyActor,
+        type: 'reply_added',
+        postId,
+        postTitle,
+        message: `${notifyActor.name} replied to your comment on "${postTitle}"`,
+      })
+    }
     setReplyDrafts((prev) => ({ ...prev, [comment.id!]: '' }))
     setOpenReply(null)
   }
@@ -184,13 +219,33 @@ export default function CommentThread({
   }
 
   // ── Resolve / Unresolve ────────────────────────────────────────────────────
-  const resolveComment = async (commentId: string) => {
-    await updateDoc(doc(firestore, 'posts', postId, 'comments', commentId), { resolved: true })
+  const resolveComment = async (comment: SMComment) => {
+    await updateDoc(doc(firestore, 'posts', postId, 'comments', comment.id!), { resolved: true })
+    if (comment.authorEmail) {
+      await notify({
+        recipients: [comment.authorEmail],
+        actor: notifyActor,
+        type: 'comment_resolved',
+        postId,
+        postTitle,
+        message: `${notifyActor.name} resolved your comment on "${postTitle}"`,
+      })
+    }
   }
 
-  const unresolveComment = async (commentId: string) => {
-    await updateDoc(doc(firestore, 'posts', postId, 'comments', commentId), { resolved: false })
+  const unresolveComment = async (comment: SMComment) => {
+    await updateDoc(doc(firestore, 'posts', postId, 'comments', comment.id!), { resolved: false })
     await logHistory('comment_unresolved')
+    if (comment.authorEmail) {
+      await notify({
+        recipients: [comment.authorEmail],
+        actor: notifyActor,
+        type: 'comment_unresolved',
+        postId,
+        postTitle,
+        message: `${notifyActor.name} reopened your comment on "${postTitle}"`,
+      })
+    }
   }
 
   // ── Delete comment ─────────────────────────────────────────────────────────
@@ -293,9 +348,9 @@ export default function CommentThread({
                       Edit
                     </button>
                   )}
-                  {isCreator && (
+                  {isAssignee && (
                     <button
-                      onClick={() => resolveComment(comment.id!)}
+                      onClick={() => resolveComment(comment)}
                       className="text-[10px] text-green-600 hover:text-green-800"
                     >
                       Resolve
@@ -423,9 +478,9 @@ export default function CommentThread({
                   <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                     <span className="text-[10px] text-gray-500 line-through">{comment.text}</span>
                     <span className="text-[9px] text-green-500">✓ resolved</span>
-                    {isCreator && (
+                    {isAssignee && (
                       <button
-                        onClick={() => unresolveComment(comment.id!)}
+                        onClick={() => unresolveComment(comment)}
                         className="text-[9px] text-blue-400 hover:text-blue-600 hover:underline"
                       >
                         Unresolve

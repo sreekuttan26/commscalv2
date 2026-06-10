@@ -4,7 +4,7 @@ import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add, format } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { submitToSheet } from '../Posttosheet';
 
 type Props = {
@@ -321,8 +321,52 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
 
 
     }
+    const deleteentry = async () => {
+    if (!selectedEntry?.id) {
+        alert("No entry selected");
+        return;
+    }
+    
+    const dataRef = ref(db, '/items/' + selectedEntry.id);
+    
+    try {
+        // Delete from Realtime Database first
+        await set(dataRef, null);
+        
+        // Delete linked task from Firestore (by title — primary link)
+        try {
+            const taskByTitleRef = doc(firestore, 'tasks', selectedEntry.title);
+            const titleSnap = await getDoc(taskByTitleRef);
+            if (titleSnap.exists()) {
+                await deleteDoc(taskByTitleRef);
+            }
+        } catch (err) {
+            console.error('Failed to delete task by title:', err);
+        }
+        
+        // Also try by id (secondary link, matches updatetask pattern)
+        try {
+            const taskByIdRef = doc(firestore, 'tasks', selectedEntry.id);
+            const idSnap = await getDoc(taskByIdRef);
+            if (idSnap.exists()) {
+                await deleteDoc(taskByIdRef);
+            }
+        } catch (err) {
+            console.error('Failed to delete task by id:', err);
+        }
+        
+        // Existing cleanup
+        delete_from_sheet(selectedEntry.title);
+        clearform();
+        changeformvisibility();
+        //log entry can be added here
+    } catch (error) {
+        console.error('Error deleting data:', error);
+        alert('Failed to delete entry. Please try again.');
+    }
+}
 
-    const deleteentry = () => {
+    const deleteentry0 = () => {
 
 
         if (!selectedEntry?.id) {

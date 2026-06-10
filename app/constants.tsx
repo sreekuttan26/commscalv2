@@ -40,7 +40,9 @@ export type taskprobs={
     mention?: string,
     remarks?: string,
      id?: string,
-    
+    hidden?: boolean,
+    linkedSmPostId?: string,
+
 }
 
 

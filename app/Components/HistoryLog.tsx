@@ -42,6 +42,8 @@ function eventLabel(event: HistoryEvent): string {
       return 'Edited a comment'
     case 'comment_unresolved':
       return 'Reopened a resolved comment thread'
+    case 'assignment_changed':
+      return 'Reassigned the post'
     default:
       return 'Made a change'
   }
@@ -121,6 +123,32 @@ export default function HistoryLog({ history }: Props) {
                           </p>
                         )
                       })
+                    } catch {
+                      return null
+                    }
+                  })()}
+                </div>
+              )}
+
+            {event.type === 'assignment_changed' &&
+              event.before !== undefined &&
+              event.after !== undefined && (
+                <div className="mt-1 text-xs text-gray-500">
+                  {(() => {
+                    try {
+                      const before: { email: string; name: string } = JSON.parse(event.before)
+                      const after:  { email: string; name: string } = JSON.parse(event.after)
+                      return (
+                        <>
+                          <span className="line-through text-red-400" title={before.email}>
+                            {before.name || 'Unassigned'}
+                          </span>
+                          <span className="mx-2 text-gray-300">→</span>
+                          <span className="text-green-600" title={after.email}>
+                            {after.name || 'Unassigned'}
+                          </span>
+                        </>
+                      )
                     } catch {
                       return null
                     }

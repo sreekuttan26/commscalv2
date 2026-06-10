@@ -5,6 +5,7 @@ import type { SMPost } from '../smcal/types'
 import { convertDriveUrl } from '../../lib/driveUrl'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
+import { emailToColor, getInitial } from '../../lib/assignColor'
 
 // ── Status visual config ───────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -69,6 +70,24 @@ function buildWeek(refDate: Date): Date[] {
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
+function AssigneeBadge({ post }: { post: SMPost }) {
+  const email = post.assignedTo || post.createdBy?.email || ''
+  const name  = post.assignedToName || post.createdBy?.name || ''
+  if (!email) return null
+
+  return (
+    <div
+      title={name}
+      className="absolute -top-1.5 -right-1.5 w-[18px] h-[18px] rounded-full
+        flex items-center justify-center text-[9px] font-bold text-white
+        ring-2 ring-white flex-shrink-0"
+      style={{ backgroundColor: emailToColor(email) }}
+    >
+      {getInitial(name)}
+    </div>
+  )
+}
+
 function PostCard({ post, onClick }: { post: SMPost; onClick: () => void }) {
   const cfg  = STATUS_CFG[post.status] ?? STATUS_CFG.draft
   const time = post.scheduledAt?.toDate
@@ -79,9 +98,10 @@ function PostCard({ post, onClick }: { post: SMPost; onClick: () => void }) {
   return (
     <div
       onClick={(e) => { e.stopPropagation(); onClick() }}
-      className={`cursor-pointer rounded-md px-1.5 py-1 border text-xs mb-0.5
+      className={`relative cursor-pointer rounded-md px-1.5 py-1 border text-xs mb-0.5
         ${cfg.card} hover:brightness-95 transition-all`}
     >
+      <AssigneeBadge post={post} />
       <div className="flex items-center gap-1.5">
         {thumb && (
           <img
@@ -422,9 +442,10 @@ export default function SmCalendar({ posts, onPostClick, onCellClick, onNewPost 
                       <div
                         key={post.id}
                         onClick={() => onPostClick(post.id!)}
-                        className={`cursor-pointer rounded-2xl p-3 sm:p-4 border
+                        className={`relative cursor-pointer rounded-2xl p-3 sm:p-4 border
                           ${cfg.card} hover:brightness-95 transition-all`}
                       >
+                        <AssigneeBadge post={post} />
                         <div className="flex items-start gap-3 sm:gap-4">
                           {post.images?.[0] && (
                             <img

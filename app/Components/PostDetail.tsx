@@ -5,6 +5,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -13,13 +14,16 @@ import {
   updateDoc,
 } from 'firebase/firestore'
 import { firestore } from '../firebase/firebase'
-import type { SMPost, SMComment, HistoryEvent, PostActor } from '../smcal/types'
+import type { SMPost, SMComment, HistoryEvent, PostActor, AppNotification } from '../smcal/types'
 import { convertDriveUrl, convertDriveUrlFull, getDriveDownloadUrl } from '../../lib/driveUrl'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import CommentThread from './CommentThread'
 import HistoryLog from './HistoryLog'
 import ImageSlotList from './ImageSlotList'
+import { useUsers } from '../constants'
+import { notify } from '../../lib/notifications'
+import { emailToColor, getInitial } from '../../lib/assignColor'
 
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -33,6 +37,7 @@ interface CurrentUser {
   uid: string
   displayName: string | null
   photoURL: string | null
+  email: string | null
 }
 
 interface Props {
@@ -74,6 +79,10 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   // Delete confirm
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [saving, setSaving] = useState(false)
+
+  // Assignment
+  const { users } = useUsers()
+  const [showAssignMenu, setShowAssignMenu] = useState(false)
 
   // Share link
   const [copied, setCopied] = useState(false)
@@ -142,7 +151,12 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   }
 
   // ── Derived values ───────────────────────────────────────────────────────────
-  const isCreator   = post.createdBy?.uid === user?.uid
+  // Assignee acts as "creator" for permission purposes; falls back to createdBy for
+  // legacy posts that predate the assignedTo field.
+  const isAssignee  = post.assignedTo
+    ? post.assignedTo === user?.email
+    : post.createdBy?.uid === user?.uid
+  const isAdmin     = users.find((u) => u.email === user?.email)?.role === 'admin'
   const cfg         = STATUS_CFG[post.status] ?? STATUS_CFG.draft
   const myApproval  = (post.approvedBy || []).find((a) => a.uid === user?.uid)
   const hasApproval = (post.approvedBy?.length ?? 0) > 0
@@ -151,6 +165,27 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     uid:      user?.uid      || '',
     name:     user?.displayName || 'User',
     photoURL: user?.photoURL || '',
+    email:    user?.email || '',
+  }
+
+  const notifyActor = {
+    email:    user?.email || '',
+    name:     user?.displayName || 'User',
+    photoURL: user?.photoURL || '',
+  }
+
+  // Recipients for post-level notifications: creator + current assignee
+  const ownerRecipients = [post.createdBy?.email, post.assignedTo]
+
+  const notifyOwners = async (type: AppNotification['type'], message: string) => {
+    await notify({
+      recipients: ownerRecipients,
+      actor: notifyActor,
+      type,
+      postId,
+      postTitle: post.title,
+      message,
+    })
   }
 
   const unresolvedFor = (target: string) =>
@@ -182,6 +217,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     setSaving(true)
     await updateDoc(doc(firestore, 'posts', postId), { title: titleDraft.trim() })
     await log('title_edit', post.title, titleDraft.trim())
+    await notifyOwners('post_edited', `${actor.name} changed the title of "${post.title}"`)
     // Rename the Drive subfolder to match the new title (fire-and-forget)
     fetch('/api/rename-sm-folder', {
       method: 'POST',
@@ -198,6 +234,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     const after   = dayjs.tz(scheduleDraft, IST).format('DD MMM YYYY, hh:mm A')
     await updateDoc(doc(firestore, 'posts', postId), { scheduledAt: Timestamp.fromDate(newDate) })
     await log('schedule_changed', before, after)
+    await notifyOwners('post_edited', `${actor.name} rescheduled "${post.title}"`)
     setSaving(false); setEditingSchedule(false)
   }
 
@@ -206,6 +243,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     setSaving(true)
     await updateDoc(doc(firestore, 'posts', postId), { bodyCopy: bodyDraft })
     await log('body_edit', post.bodyCopy, bodyDraft)
+    await notifyOwners('post_edited', `${actor.name} edited the body copy of "${post.title}"`)
     setSaving(false); setEditingBody(false)
   }
 
@@ -224,6 +262,9 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     for (const url of added)   await log('image_added',   undefined, url)
     for (const url of removed) await log('image_removed', url, undefined)
     if (reordered) await log('image_reordered', JSON.stringify(oldKept), JSON.stringify(newKept))
+    if (added.length || removed.length || reordered) {
+      await notifyOwners('post_edited', `${actor.name} updated the images of "${post.title}"`)
+    }
     setSaving(false); setEditingImages(false)
   }
 
@@ -233,6 +274,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     setSaving(true)
     await updateDoc(doc(firestore, 'posts', postId), { docUrl: trimmed })
     await log('doc_url_edit', post.docUrl || '', trimmed)
+    await notifyOwners('post_edited', `${actor.name} updated the document URL of "${post.title}"`)
     setSaving(false); setEditingDocUrl(false)
   }
 
@@ -248,6 +290,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       })
       await log('approval_reverted')
       if (newStatus !== post.status) await log('status_changed', post.status, newStatus)
+      await notifyOwners('approval_reverted', `${actor.name} revoked their approval on "${post.title}"`)
     } else {
       const approval = {
         uid:      user!.uid,
@@ -263,6 +306,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       })
       await log('approved')
       if (prevStatus !== 'approved') await log('status_changed', prevStatus, 'approved')
+      await notifyOwners('post_approved', `${actor.name} approved "${post.title}"`)
     }
   }
 
@@ -272,12 +316,49 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     const prev = post.status
     await updateDoc(doc(firestore, 'posts', postId), { status })
     await log('status_changed', prev, status)
+    await notifyOwners('status_changed', `${actor.name} changed the status of "${post.title}" from ${prev} to ${status}`)
+
+    // Bidirectional sync with linked task
+    if (post.sourceTaskId) {
+      const taskRef = doc(firestore, 'tasks', post.sourceTaskId)
+      if (status === 'posted') {
+        await updateDoc(taskRef, { current_status: 'Posted' })
+      } else if (prev === 'posted') {
+        const taskSnap = await getDoc(taskRef)
+        if (taskSnap.exists() && taskSnap.data().current_status === 'Posted') {
+          await updateDoc(taskRef, { current_status: 'In Progress' })
+        }
+      }
+    }
   }
 
   // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     await deleteDoc(doc(firestore, 'posts', postId))
     onClose()
+  }
+
+  // ── Reassign ─────────────────────────────────────────────────────────────────
+  const reassign = async (newEmail: string) => {
+    setShowAssignMenu(false)
+    if (newEmail === post.assignedTo) return
+    const newUser = users.find((u) => u.email === newEmail)
+    const newName = newUser?.displayName || newEmail
+    const before = JSON.stringify({ email: post.assignedTo || '', name: post.assignedToName || '' })
+    const after  = JSON.stringify({ email: newEmail, name: newName })
+    await updateDoc(doc(firestore, 'posts', postId), {
+      assignedTo: newEmail,
+      assignedToName: newName,
+    })
+    await log('assignment_changed', before, after)
+    await notify({
+      recipients: [newEmail],
+      actor: notifyActor,
+      type: 'post_assigned',
+      postId,
+      postTitle: post.title,
+      message: `${actor.name} assigned you to "${post.title}"`,
+    })
   }
 
   // ── Edit helpers ─────────────────────────────────────────────────────────────
@@ -439,6 +520,56 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Assigned to */}
+          <div className="relative">
+            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-1">
+              Assigned to
+            </p>
+            <div
+              className={`flex items-center gap-2 ${isAdmin ? 'cursor-pointer group' : ''}`}
+              onClick={() => isAdmin && setShowAssignMenu((v) => !v)}
+            >
+              <div
+                className="w-7 h-7 rounded-full flex items-center justify-center text-xs
+                  font-bold text-white flex-shrink-0"
+                style={{ backgroundColor: emailToColor(post.assignedTo || post.createdBy?.email || '') }}
+                title={post.assignedToName || post.createdBy?.name}
+              >
+                {getInitial(post.assignedToName || post.createdBy?.name || '?')}
+              </div>
+              <p className="text-sm font-medium text-gray-800">
+                {post.assignedToName || post.createdBy?.name}
+              </p>
+              {isAdmin && (
+                <span className="text-gray-300 text-xs group-hover:text-gray-500">▾</span>
+              )}
+            </div>
+
+            {showAssignMenu && (
+              <div className="absolute z-20 mt-1 w-56 max-h-64 overflow-y-auto bg-white
+                border border-gray-200 rounded-xl shadow-lg py-1">
+                {users.map((u) => (
+                  <button
+                    key={u.email}
+                    onClick={() => reassign(u.email)}
+                    className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50
+                      flex items-center gap-2
+                      ${u.email === post.assignedTo ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700'}`}
+                  >
+                    <div
+                      className="w-5 h-5 rounded-full flex items-center justify-center
+                        text-[10px] font-bold text-white flex-shrink-0"
+                      style={{ backgroundColor: emailToColor(u.email) }}
+                    >
+                      {getInitial(u.displayName || u.email)}
+                    </div>
+                    <span className="truncate">{u.displayName || u.email}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Approvals */}
@@ -654,9 +785,12 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                     target={`image:${selectedImg}`}
                     comments={comments.filter((c) => c.target === `image:${selectedImg}`)}
                     currentUser={user}
-                    isCreator={isCreator}
+                    isAssignee={isAssignee}
                     title={`Comments — Image ${selectedImg + 1}`}
                     onClose={() => setSelectedImg(null)}
+                    postTitle={post.title}
+                    creatorEmail={post.createdBy?.email}
+                    assigneeEmail={post.assignedTo}
                   />
                 </div>
               )}
@@ -732,8 +866,11 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                 target="body"
                 comments={comments.filter((c) => c.target === 'body')}
                 currentUser={user}
-                isCreator={isCreator}
+                isAssignee={isAssignee}
                 title="Comments on body copy"
+                postTitle={post.title}
+                creatorEmail={post.createdBy?.email}
+                assigneeEmail={post.assignedTo}
               />
             </div>
           </div>
@@ -757,7 +894,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             </button>
 
             {/* Mark as Posted: creator always; any user once post is approved/posted */}
-            {user && (isCreator || post.status === 'approved' || post.status === 'posted') && post.status !== 'posted' && (
+            {user && (isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'posted' && (
               <button
                 onClick={() => setStatus('posted')}
                 disabled={!hasApproval}
@@ -772,7 +909,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
 
             {/* Set to Scheduled: creator always; any user once post is approved/posted */}
-            {user && (isCreator || post.status === 'approved' || post.status === 'posted') && post.status !== 'scheduled' && (
+            {user && (isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'scheduled' && (
               <button
                 onClick={() => setStatus('scheduled')}
                 disabled={!hasApproval}
@@ -787,7 +924,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
 
             {/* Approval warning — for anyone who can see the above buttons */}
-            {user && (isCreator || post.status === 'approved' || post.status === 'posted') && !hasApproval && (
+            {user && (isAssignee || post.status === 'approved' || post.status === 'posted') && !hasApproval && (
               <p className="w-full text-xs text-amber-600 bg-amber-50 border border-amber-200
                 rounded-xl px-3 py-2 mt-1">
                 Scheduling and posting require at least one approval.
@@ -795,7 +932,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
 
             {/* Creator-only: revert to draft + delete */}
-            {isCreator && (
+            {isAssignee && (
               <>
                 {post.status !== 'draft' && (
                   <button

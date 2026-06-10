@@ -6,6 +6,7 @@ export type PostActor = {
   uid: string
   name: string
   photoURL: string
+  email?: string
 }
 
 export type Approval = {
@@ -26,6 +27,9 @@ export type SMPost = {
   createdBy: PostActor
   createdAt: Timestamp
   approvedBy: Approval[]
+  assignedTo: string
+  assignedToName: string
+  sourceTaskId?: string
 }
 
 export type CommentReply = {
@@ -36,6 +40,7 @@ export type CommentReply = {
   createdAt: Timestamp
   editedAt?: Timestamp | null
   editHistory?: Array<{ text: string; editedAt: Timestamp }>
+  authorEmail?: string
 }
 
 export type SMComment = {
@@ -50,6 +55,7 @@ export type SMComment = {
   replies: CommentReply[]
   editedAt?: Timestamp | null
   editHistory?: Array<{ text: string; editedAt: Timestamp }>
+  authorEmail?: string
 }
 
 export type HistoryEventType =
@@ -66,6 +72,7 @@ export type HistoryEventType =
   | 'comment_resolved'
   | 'comment_edited'
   | 'comment_unresolved'
+  | 'assignment_changed'
 
 export type HistoryEvent = {
   id?: string
@@ -75,4 +82,36 @@ export type HistoryEvent = {
   before?: string
   after?: string
   target?: string
+}
+
+// ── Notifications ────────────────────────────────────────────────────────────
+
+export type NotificationType =
+  | 'post_created'
+  | 'post_assigned'
+  | 'comment_added'
+  | 'reply_added'
+  | 'post_edited'
+  | 'status_changed'
+  | 'post_approved'
+  | 'approval_reverted'
+  | 'comment_resolved'
+  | 'comment_unresolved'
+
+export type NotificationActor = {
+  email: string
+  name: string
+  photoURL: string
+}
+
+export type AppNotification = {
+  id?: string
+  recipientEmail: string
+  actor: NotificationActor
+  type: NotificationType
+  postId: string
+  postTitle: string
+  message: string
+  read: boolean
+  createdAt: Timestamp
 }

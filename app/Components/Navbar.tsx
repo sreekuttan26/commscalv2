@@ -1,11 +1,36 @@
 'use client'
 import Link from 'next/link'
 import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { nav_items } from '../constants'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
-import { auth } from '../firebase/firebase'
+import {
+  collection,
+  doc,
+  onSnapshot,
+  query,
+  updateDoc,
+  where,
+} from 'firebase/firestore'
+import { auth, firestore } from '../firebase/firebase'
 import { useUsers } from '../constants'
+import { cleanupOldNotifications } from '../../lib/notifications'
+import { emailToColor, getInitial } from '../../lib/assignColor'
+import type { AppNotification } from '../smcal/types'
 import Image from 'next/image'
+
+function timeAgo(ts: AppNotification['createdAt'] | undefined | null): string {
+  if (!ts?.toMillis) return ''
+  const seconds = Math.floor((Date.now() - ts.toMillis()) / 1000)
+  if (seconds < 60) return 'just now'
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes}m ago`
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours}h ago`
+  const days = Math.floor(hours / 24)
+  if (days < 30) return `${days}d ago`
+  return `${Math.floor(days / 30)}mo ago`
+}
 
 type navprobes = {
   current_page?: string
@@ -13,10 +38,13 @@ type navprobes = {
 
 const Navbar = ({ current_page }: navprobes) => {
   const { users, loading } = useUsers();
+  const router = useRouter();
   const [isadmin, setisadmin] = useState<boolean>(false);
   const [username, setUsername] = useState<string | null>("null");
   const [useremail, setUseremail] = useState<string | null>("null");
   const [isHovered, setIsHovered] = useState<number | null>(null);
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -28,6 +56,41 @@ const Navbar = ({ current_page }: navprobes) => {
     });
     return () => unsubscribe();
   }, [loading]);
+
+  useEffect(() => {
+    if (!useremail || useremail === "Login" || useremail === "null") return;
+
+    cleanupOldNotifications(useremail);
+
+    const q = query(
+      collection(firestore, 'notifications'),
+      where('recipientEmail', '==', useremail)
+    );
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AppNotification));
+      items.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
+      setNotifications(items);
+    });
+    return () => unsubscribe();
+  }, [useremail]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const handleNotificationClick = async (n: AppNotification) => {
+    if (!n.read && n.id) {
+      await updateDoc(doc(firestore, 'notifications', n.id), { read: true });
+    }
+    setShowDropdown(false);
+    router.push(`/smcal/${n.postId}`);
+  };
+
+  const markAllAsRead = async () => {
+    await Promise.all(
+      notifications
+        .filter((n) => !n.read && n.id)
+        .map((n) => updateDoc(doc(firestore, 'notifications', n.id!), { read: true }))
+    );
+  };
 
   const handleLogout = async () => {
     try {
@@ -67,9 +130,106 @@ const Navbar = ({ current_page }: navprobes) => {
         </span>
       </div>
 
-      {/* Navigation Label */}
-      <div className="w-full px-4 pt-4 pb-2">
-        
+      {/* Notifications */}
+      <div className="w-full px-3 pt-3 pb-1 relative">
+        <button
+          onClick={() => setShowDropdown((v) => !v)}
+          className="group w-full p-2.5 flex items-center gap-3 rounded-xl
+            transition-all duration-200 relative
+            text-blue-200 hover:bg-white/10 hover:text-white border border-transparent"
+        >
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg
+            transition-all duration-200 flex-shrink-0 bg-blue-950/40
+            group-hover:bg-white/10 relative">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              className="opacity-90"
+              style={{ width: 18, height: 18 }}
+            >
+              <path d="M12 2a6 6 0 0 0-6 6v3.09c0 .58-.23 1.14-.64 1.55L4 14h16l-1.36-1.36a2.2 2.2 0 0 1-.64-1.55V8a6 6 0 0 0-6-6Z" />
+              <path d="M9.5 18a2.5 2.5 0 0 0 5 0h-5Z" />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full
+                bg-red-500 text-white text-[9px] font-bold flex items-center justify-center
+                ring-2 ring-blue-900">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </div>
+          <span className="hidden sm:block text-sm font-medium truncate">
+            Notifications
+          </span>
+        </button>
+
+        {/* Dropdown */}
+        {showDropdown && (
+          <>
+            <div
+              className="fixed inset-0 z-30"
+              onClick={() => setShowDropdown(false)}
+            />
+            <div className="absolute left-2 sm:left-full sm:ml-2 top-0 z-40 w-[360px] max-w-[90vw]
+              max-h-[420px] flex flex-col bg-white text-gray-800 rounded-2xl shadow-2xl
+              border border-gray-200 overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
+                <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-[11px] text-blue-500 hover:text-blue-700"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-gray-300">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="w-8 h-8 mb-2"
+                    >
+                      <path d="M12 2a6 6 0 0 0-6 6v3.09c0 .58-.23 1.14-.64 1.55L4 14h16l-1.36-1.36a2.2 2.2 0 0 1-.64-1.55V8a6 6 0 0 0-6-6Z" />
+                      <path d="M9.5 18a2.5 2.5 0 0 0 5 0h-5Z" />
+                    </svg>
+                    <p className="text-xs">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <button
+                      key={n.id}
+                      onClick={() => handleNotificationClick(n)}
+                      className={`w-full text-left flex gap-2.5 px-4 py-2.5 border-b
+                        border-gray-50 hover:bg-gray-50 transition-colors
+                        ${!n.read ? 'bg-blue-50/70' : ''}`}
+                    >
+                      <div
+                        className="w-7 h-7 rounded-full flex items-center justify-center
+                          text-[11px] font-bold text-white flex-shrink-0 mt-0.5"
+                        style={{ backgroundColor: emailToColor(n.actor.email) }}
+                      >
+                        {getInitial(n.actor.name)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs text-gray-700 leading-snug">{n.message}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[10px] text-gray-400 truncate">{n.postTitle}</span>
+                          <span className="text-[10px] text-gray-300">·</span>
+                          <span className="text-[10px] text-gray-400 flex-shrink-0">{timeAgo(n.createdAt)}</span>
+                        </div>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Nav Items */}
