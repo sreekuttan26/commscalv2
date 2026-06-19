@@ -256,19 +256,26 @@ const Navbar = ({ current_page }: navprobes) => {
             )}
 
             {/* Icon Container */}
-            <div className={`flex items-center justify-center w-8 h-8 rounded-lg 
+            <div className={`flex items-center justify-center w-8 h-8 rounded-lg
               transition-all duration-200 flex-shrink-0
               ${current_page === item.name
                 ? "bg-white"
                 : "bg-blue-950/40 group-hover:bg-white/10"
               }`}>
-              <Image
-                src={item.icon}
-                alt={item.name}
-                width={18}
-                height={18}
-                className="opacity-90"
-              />
+              {item.reactIcon ? (
+                <item.reactIcon
+                  size={18}
+                  className={current_page === item.name ? "text-blue-600" : "text-blue-200 group-hover:text-white opacity-90"}
+                />
+              ) : (
+                <Image
+                  src={item.icon}
+                  alt={item.name}
+                  width={18}
+                  height={18}
+                  className="opacity-90"
+                />
+              )}
             </div>
 
             {/* Label */}
