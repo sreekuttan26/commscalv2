@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { categorylist, itemprobes, mentionlist, platformlist, taskprobs } from '../constants'
-import { db, firestore } from '../firebase/firebase';
+import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add } from 'date-fns';
 import { doc, setDoc } from 'firebase/firestore';
@@ -156,7 +156,9 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
             sm_status: sm_status,
             mention: mention,
             remarks: remarks,
-            website_status: website_status
+            website_status: website_status,
+            addedBy: auth.currentUser?.email ?? "",
+            addedAt: Date.now(),
         })
             .then(() => {
                 //console.log('Data added successfully!');

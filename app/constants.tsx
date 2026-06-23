@@ -73,7 +73,11 @@ export type itemprobes = {
     remarks: string,
     id?: string,
     assigned_to?: string,
-    wtw_status?:boolean
+    wtw_status?:boolean,
+    addedBy?: string,
+    addedAt?: number,
+    updatedBy?: string,
+    updatedAt?: number,
 }
 
 export const categorylist = [

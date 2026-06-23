@@ -48,13 +48,16 @@ export async function cleanupOldNotifications(email: string) {
   if (sessionStorage.getItem(sessionKey)) return
   sessionStorage.setItem(sessionKey, '1')
 
-  const cutoff = Timestamp.fromMillis(Date.now() - 30 * 24 * 60 * 60 * 1000)
-  const stale = await getDocs(
+  const cutoffMillis = Date.now() - 30 * 24 * 60 * 60 * 1000
+  const snap = await getDocs(
     query(
       collection(firestore, 'notifications'),
-      where('recipientEmail', '==', email),
-      where('createdAt', '<', cutoff)
+      where('recipientEmail', '==', email)
     )
   )
-  await Promise.all(stale.docs.map((d) => deleteDoc(d.ref)))
+  const stale = snap.docs.filter((d) => {
+    const createdAt = d.data().createdAt as Timestamp | undefined
+    return !!createdAt && createdAt.toMillis() < cutoffMillis
+  })
+  await Promise.all(stale.map((d) => deleteDoc(d.ref)))
 }

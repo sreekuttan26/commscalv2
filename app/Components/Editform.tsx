@@ -16,6 +16,14 @@ type Props = {
     showToast?: (message: string) => void
 }
 
+function formatTimestamp(ms: number): string {
+    return new Date(ms).toLocaleString('en-IN', {
+        day: '2-digit', month: 'short', year: 'numeric',
+        hour: '2-digit', minute: '2-digit',
+        timeZone: 'Asia/Kolkata',
+    });
+}
+
 const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props) => {
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
@@ -81,12 +89,13 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
         const dataRef = ref(db, '/items/' + selectedEntry?.id);
         const newdataRef = push(dataRef);
 
-        
+        const currentUserEmail = auth.currentUser?.email ?? "";
+        const isDifferentUser = !!selectedEntry?.addedBy && currentUserEmail !== selectedEntry.addedBy;
 
 
 
         console.log("sm== "+sm_status)
-        update(dataRef, {
+        const updatePayload: Record<string, any> = {
             date: date,
             createdon: createdon,
             title: title,
@@ -101,8 +110,16 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
             mention: mention,
             remarks: remarks,
             sm_status:sm_status
+        };
 
-        })
+        // Self-edits by the original creator aren't tracked as updates.
+        // Legacy entries with no addedBy are always attributed to the editor.
+        if (isDifferentUser || !selectedEntry?.addedBy) {
+            updatePayload.updatedBy = currentUserEmail;
+            updatePayload.updatedAt = Date.now();
+        }
+
+        update(dataRef, updatePayload)
             .then(() => {
                 //console.log('Data added successfully!');
                 addToTask({ title, description, url, assigned_to: assign_to, createdon: new Date().toISOString().split('T')[0] })
@@ -497,6 +514,31 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
 
             <div className='absolute w-[90%] max-h-[80%] p-4 flex flex-col z-30 bg-white rounded-lg shadow-lg m-4 overflow-y-scroll ' >
                 <h1 className='w-full text-xl font-semibold text-gray-700'>Edit Item</h1>
+
+                {(selectedEntry?.addedBy || selectedEntry?.updatedBy) && (
+                    <div className="w-full text-xs text-gray-500 border-b border-gray-100 pb-2 mb-3 flex flex-col gap-1">
+                        {selectedEntry?.addedBy && (
+                            <div>
+                                <span className="font-medium">Added by:</span> {selectedEntry.addedBy.split('@')[0]}
+                                {selectedEntry?.addedAt && (
+                                    <span className="ml-1 text-gray-400">
+                                        on {formatTimestamp(selectedEntry.addedAt)}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                        {selectedEntry?.updatedBy && (
+                            <div>
+                                <span className="font-medium">Last updated by:</span> {selectedEntry.updatedBy.split('@')[0]}
+                                {selectedEntry?.updatedAt && (
+                                    <span className="ml-1 text-gray-400">
+                                        on {formatTimestamp(selectedEntry.updatedAt)}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Date</label>
