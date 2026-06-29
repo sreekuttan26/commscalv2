@@ -68,7 +68,8 @@ function ItemsPopup({
 
                 <div className="flex-1 min-w-0">
                   {/* Title */}
-                  <p className="font-semibold text-gray-800 text-sm truncate">
+                  <p onClick={() => window.open(item.url, "_blank", "noopener,noreferrer")}
+                  className="font-semibold text-gray-800 text-sm truncate cursor-pointer hover:text-blue-700">
                     {item.title ??  "Untitled Item"}
                   </p>
 
