@@ -28,6 +28,7 @@ export interface TaskPrefill {
   bodyCopy: string
   assignedTo: string
   assignedToName: string
+  docUrl:string
 }
 
 interface Props {
@@ -41,7 +42,7 @@ export default function PostModal({ user, prefilledDate, onClose, taskPrefill }:
   const { users } = useUsers()
   const defaultDT = prefilledDate
     ? `${prefilledDate}T09:00`
-    : dayjs().tz(IST).format('YYYY-MM-DDTHH:mm')
+    : `${dayjs().tz(IST).format('YYYY-MM-DD')}T09:00`
 
   // Generate a stable Firestore document ID on first render so uploads can use it
   const [postId] = useState(() => doc(collection(firestore, 'posts')).id)
@@ -49,7 +50,7 @@ export default function PostModal({ user, prefilledDate, onClose, taskPrefill }:
   const [title, setTitle]         = useState(taskPrefill?.title ?? '')
   const [scheduledAt, setScheduledAt] = useState(defaultDT)
   const [imageUrls, setImageUrls] = useState<string[]>([''])
-  const [docUrl,   setDocUrl]     = useState('')
+  const [docUrl,   setDocUrl]     = useState(taskPrefill?.docUrl ?? '')
   const [bodyCopy, setBodyCopy]   = useState(taskPrefill?.bodyCopy ?? '')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError]         = useState('')

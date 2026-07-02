@@ -98,11 +98,13 @@ export default function SmCalPage() {
     setTaskPrefillForNewPost({
       taskId: task.id || '',
       title: task.title || '',
-      bodyCopy: task.description || '',
+      bodyCopy: `${task.description}\n${task.url}`  || '',
       assignedTo: firstAssignee,
+      docUrl:task.url || "",
       assignedToName: assignedUser?.displayName || firstAssignee,
     })
-    setPrefilledDate('')
+    setPrefilledDate(task.deadline?task.deadline.toString():'')
+    //setPrefilledDate(dayjs(task.date).format('YYYY-MM-DDT09:00'))
     setShowNewPost(true)
   }
 ///////////////////////////////////////////////////////////////
