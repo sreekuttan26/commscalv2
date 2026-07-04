@@ -69,6 +69,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [imagesDraft,     setImagesDraft]     = useState<string[]>([])
   const [editingDocUrl,   setEditingDocUrl]   = useState(false)
   const [docUrlDraft,     setDocUrlDraft]     = useState('')
+  const [isReguser,     setisRegUser]     = useState(false)
 
   // Image comment panel
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
@@ -131,6 +132,10 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
+   useEffect(()=>{
+  setisRegUser(users.some((u) => u.email === user?.email));
+  },[users, user])
+
   // ── Loading / not found ──────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -150,6 +155,8 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     )
   }
 
+ 
+
   // ── Derived values ───────────────────────────────────────────────────────────
   // Assignee acts as "creator" for permission purposes; falls back to createdBy for
   // legacy posts that predate the assignedTo field.
@@ -160,6 +167,10 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const cfg         = STATUS_CFG[post.status] ?? STATUS_CFG.draft
   const myApproval  = (post.approvedBy || []).find((a) => a.uid === user?.uid)
   const hasApproval = (post.approvedBy?.length ?? 0) > 0
+
+ 
+  console.log(isReguser)
+  console.log(users)
 
   const actor: PostActor = {
     uid:      user?.uid      || '',
@@ -382,12 +393,13 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       {/* ── Sticky header ── */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3">
         <div className="max-w-5xl mx-auto flex items-center gap-4">
+          {isReguser && 
           <button
             onClick={onClose}
             className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex-shrink-0"
           >
             ← Back
-          </button>
+          </button>}
 
           {/* Title (editable) */}
           <div className="flex items-center gap-2 flex-1 min-w-0 justify-center">
@@ -422,13 +434,16 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             ) : (
               <>
                 <h1 className="text-lg font-bold text-gray-900 truncate">{post.title}</h1>
+
+
+                {isReguser &&
                 <button
                   onClick={startEditTitle}
                   className="text-gray-300 hover:text-gray-600 flex-shrink-0 text-base"
                   title="Edit title"
                 >
                   ✎
-                </button>
+                </button>}
               </>
             )}
           </div>
@@ -492,13 +507,14 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                 <p className="text-sm font-medium text-gray-800">
                   {formatIST(post.scheduledAt)}
                 </p>
+                {isReguser &&
                 <button
                   onClick={startEditSchedule}
                   className="text-gray-300 hover:text-gray-600 text-base"
                   title="Edit schedule"
                 >
                   ✎
-                </button>
+                </button>}
               </div>
             )}
           </div>
@@ -644,13 +660,14 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                 ) : (
                   <p className="text-sm text-gray-400 italic">No document linked.</p>
                 )}
+                {isReguser &&
                 <button
                   onClick={startEditDocUrl}
                   className="text-gray-300 hover:text-gray-600 flex-shrink-0 text-base"
                   title="Edit document URL"
                 >
                   ✎
-                </button>
+                </button>}
               </div>
             )}
           </div>
@@ -661,9 +678,11 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-gray-800">Images</h2>
             {!editingImages ? (
+              
+
               <button
                 onClick={startEditImages}
-                className="text-sm text-blue-500 hover:text-blue-700"
+                className={`text-sm text-blue-500 hover:text-blue-700 ${isReguser?'block':'hidden'}`}
               >
                 Edit Images
               </button>
@@ -894,7 +913,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             </button>
 
             {/* Mark as Posted: creator always; any user once post is approved/posted */}
-            {user && (isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'posted' && (
+            {user && isReguser && (  isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'posted' && (
               <button
                 onClick={() => setStatus('posted')}
                 disabled={!hasApproval}
@@ -909,7 +928,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
 
             {/* Set to Scheduled: creator always; any user once post is approved/posted */}
-            {user && (isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'scheduled' && (
+            {user && isReguser && (  isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'scheduled' && (
               <button
                 onClick={() => setStatus('scheduled')}
                 disabled={!hasApproval}
@@ -924,7 +943,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
 
             {/* Approval warning — for anyone who can see the above buttons */}
-            {user && (isAssignee || post.status === 'approved' || post.status === 'posted') && !hasApproval && (
+            {user && isReguser && (  isAssignee || post.status === 'approved' || post.status === 'posted') && !hasApproval && (
               <p className="w-full text-xs text-amber-600 bg-amber-50 border border-amber-200
                 rounded-xl px-3 py-2 mt-1">
                 Scheduling and posting require at least one approval.

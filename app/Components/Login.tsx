@@ -4,15 +4,23 @@ import React, { useEffect, useState } from 'react'
 import { auth } from '../firebase/firebase';
 import Googleauth from './Googleauth';
 import { useUsers } from '../constants';
+import { usePathname } from 'next/navigation';
 
 import{ getRegistedUsers} from "../firebase/firebase";
 
+type Props = {
+  params?: Promise<{ postId: string }>
+}
 
 
 
-const Login = () => {
+
+const Login = ({params}:Props) => {
     const [reg_users, setReg_users] = useState<any[]>([]);
     const[loading,setLoading]=useState(true);
+
+    const path=usePathname()
+    const isSMCalSharePage=path.includes('/smcal/')
 
     useEffect(()=>{
         getRegistedUsers()
@@ -38,7 +46,12 @@ const Login = () => {
             if (userlist.includes(user?.email ? user.email : "")) {
                 setUsername(user?.displayName ?? "Login");
                 setUseemail(user?.email ?? "");
-            } else {
+            } else if(isSMCalSharePage && user?.email?.endsWith('@atree.org')){
+                setUsername(user?.displayName ?? "Login");
+                setUseemail(user?.email ?? "");
+
+            }            
+            else {
                 setUsername("null");
                 setUseemail("");
                 if (user && !loading) {
