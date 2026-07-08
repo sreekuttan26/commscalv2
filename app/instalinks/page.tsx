@@ -182,8 +182,8 @@ const Page = () => {
             <Navbar current_page="InstaLinks" />
 
             {/* InstaLinks content */}
-            <div className="flex flex-2">
-                <div className='w-full h-full flex flex-col mt-10 px-4 sm:px-10'>
+            <div className="flex flex-2  ">
+                <div className='w-full h-full flex flex-col mt-10 px-4 sm:px-10 max-h-screen overflow-y-scroll'>
                     <div className='w-full flex items-center justify-between mb-5'>
                         <h1 className='text-lg font-bold text-gray-500'>InstaLinks</h1>
                     </div>

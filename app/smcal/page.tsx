@@ -10,6 +10,8 @@ import SmCalendar from '../Components/SmCalendar'
 import PostModal, { type TaskPrefill } from '../Components/PostModal'
 import PostDetail from '../Components/PostDetail'
 import Viewdata from '../Components/Viewdata'
+import UpcomingEnvDays from '../Components/UpcomingEnvDays'
+import { useEnvDays } from '../hooks/useEnvDays'
 import type { SMPost } from './types'
 
 const PRIORITY_CFG = {
@@ -41,6 +43,7 @@ export default function SmCalPage() {
 
   const { users } = useUsers()
   const isAdmin = users.find((u) => u.email === user?.email)?.role === 'admin'
+  const { days: envDays } = useEnvDays()
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => setUser(u))
@@ -146,6 +149,7 @@ const startTaskResize = (e:React.MouseEvent<HTMLDivElement>) => {
         <div className="flex-1 min-h-0">
           <SmCalendar
             posts={posts}
+            envDays={envDays}
             onPostClick={(id) => setSelectedPostId(id)}
             onCellClick={(dateStr) => openNewPost(dateStr)}
             onNewPost={() => openNewPost()}
@@ -362,7 +366,11 @@ const startTaskResize = (e:React.MouseEvent<HTMLDivElement>) => {
           // </div>
         )}
 
-       
+        <UpcomingEnvDays
+          days={envDays}
+          isAdmin={isAdmin}
+          currentUserEmail={user?.email ?? ''}
+        />
       </div>
 
       {showNewPost && (

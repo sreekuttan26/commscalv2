@@ -1,11 +1,13 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Timestamp } from 'firebase/firestore'
 import type { SMPost } from '../smcal/types'
 import { convertDriveUrl } from '../../lib/driveUrl'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import { emailToColor, getInitial } from '../../lib/assignColor'
+import type { EnvDay } from '../hooks/useEnvDays'
+import EnvDayPopover from './EnvDayPopover'
 
 // ── Status visual config ───────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -20,6 +22,7 @@ const DAY_HEADERS_SHORT = ['M',   'T',   'W',   'T',   'F',   'S',   'S'  ]
 
 interface Props {
   posts: SMPost[]
+  envDays?: EnvDay[]
   onPostClick: (id: string) => void
   onCellClick: (dateStr: string) => void
   onNewPost: () => void
@@ -37,6 +40,14 @@ function toCellDateStr(date: Date): string {
 
 function todayStr(): string {
   return toCellDateStr(new Date())
+}
+
+function monthDayKey(date: Date): string {
+  return `${date.getMonth() + 1}-${date.getDate()}`
+}
+
+function fullDateKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`
 }
 
 function buildMonthGrid(refDate: Date): { date: Date; isCurrentMonth: boolean }[] {
@@ -122,12 +133,44 @@ function PostCard({ post, onClick }: { post: SMPost; onClick: () => void }) {
   )
 }
 
+function EnvDayLabels({ envDays }: { envDays: EnvDay[] }) {
+  const [popupDay, setPopupDay] = useState<EnvDay | null>(null)
+  const [popupAnchor, setPopupAnchor] = useState<HTMLElement | null>(null)
+
+  if (envDays.length === 0) return null
+
+  return (
+    <div className="mb-0.5">
+      {envDays.map((d) => (
+        <button
+          key={d.id}
+          onClick={(e) => { e.stopPropagation(); setPopupDay(d); setPopupAnchor(e.currentTarget) }}
+          title={d.name}
+          className="w-full flex items-center gap-1 text-[10px] text-green-700 truncate
+            hover:text-green-900 hover:bg-green-50 rounded px-1"
+        >
+          <span>🌿</span>
+          <span className="truncate">{d.name}</span>
+        </button>
+      ))}
+      {popupDay && popupAnchor && (
+        <EnvDayPopover
+          day={popupDay}
+          anchor={popupAnchor}
+          onClose={() => { setPopupDay(null); setPopupAnchor(null) }}
+        />
+      )}
+    </div>
+  )
+}
+
 function CalendarCell({
-  date, isCurrentMonth, posts, today, onPostClick, onCellClick,
+  date, isCurrentMonth, posts, envDays, today, onPostClick, onCellClick,
 }: {
   date: Date
   isCurrentMonth: boolean
   posts: SMPost[]
+  envDays: EnvDay[]
   today: string
   onPostClick: (id: string) => void
   onCellClick: (dateStr: string) => void
@@ -162,6 +205,9 @@ function CalendarCell({
           + Add
         </span>
       </div>
+
+      {/* Environmental day labels */}
+      <EnvDayLabels envDays={envDays} />
 
       {/* Mobile: coloured status dots (hidden on sm+) */}
       {posts.length > 0 && (
@@ -209,7 +255,7 @@ function CalendarCell({
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export default function SmCalendar({ posts, onPostClick, onCellClick, onNewPost }: Props) {
+export default function SmCalendar({ posts, envDays = [], onPostClick, onCellClick, onNewPost }: Props) {
   const [refDate, setRefDate] = useState(new Date())
   const [view, setView] = useState<'month' | 'week' | 'day'>('month')
   const TODAY = todayStr()
@@ -228,6 +274,35 @@ export default function SmCalendar({ posts, onPostClick, onCellClick, onNewPost 
   }, [posts])
 
   const getPostsForDate = (dateStr: string) => postsByDate[dateStr] || []
+
+  // Recurring days (no `year`) are keyed by month-day and match every year.
+  // One-time days (`year` set) are keyed by full date and only match that year.
+  const envDaysByKey = useMemo(() => {
+    const monthDayMap: Record<string, EnvDay[]> = {}
+    const fullDateMap: Record<string, EnvDay[]> = {}
+    envDays.forEach((d) => {
+      if (!d.month || !d.day) return
+      if (d.year) {
+        const key = `${d.year}-${d.month}-${d.day}`
+        ;(fullDateMap[key] = fullDateMap[key] || []).push(d)
+      } else {
+        const key = `${d.month}-${d.day}`
+        ;(monthDayMap[key] = monthDayMap[key] || []).push(d)
+      }
+    })
+    return { monthDayMap, fullDateMap }
+  }, [envDays])
+
+  // DEBUG — temporary, remove once env-day highlighting is confirmed working end-to-end.
+  useEffect(() => {
+    console.log('🌿 envDays received:', envDays.length, envDays)
+    console.log('🌿 envDaysByKey:', envDaysByKey)
+  }, [envDays, envDaysByKey])
+
+  const getEnvDaysForDate = (date: Date) => [
+    ...(envDaysByKey.fullDateMap[fullDateKey(date)] || []),
+    ...(envDaysByKey.monthDayMap[monthDayKey(date)] || []),
+  ]
 
   const monthGrid = useMemo(() => buildMonthGrid(refDate), [refDate])
   const weekDays  = useMemo(() => buildWeek(refDate), [refDate])
@@ -356,6 +431,7 @@ export default function SmCalendar({ posts, onPostClick, onCellClick, onNewPost 
                   date={date}
                   isCurrentMonth={isCurrentMonth}
                   posts={getPostsForDate(toCellDateStr(date))}
+                  envDays={getEnvDaysForDate(date)}
                   today={TODAY}
                   onPostClick={onPostClick}
                   onCellClick={onCellClick}
@@ -402,6 +478,7 @@ export default function SmCalendar({ posts, onPostClick, onCellClick, onNewPost 
                   date={date}
                   isCurrentMonth
                   posts={getPostsForDate(toCellDateStr(date))}
+                  envDays={getEnvDaysForDate(date)}
                   today={TODAY}
                   onPostClick={onPostClick}
                   onCellClick={onCellClick}
@@ -414,6 +491,11 @@ export default function SmCalendar({ posts, onPostClick, onCellClick, onNewPost 
         {/* Day view */}
         {view === 'day' && (
           <div className="p-3 sm:p-4">
+            {getEnvDaysForDate(refDate).length > 0 && (
+              <div className="mb-3 max-w-xs">
+                <EnvDayLabels envDays={getEnvDaysForDate(refDate)} />
+              </div>
+            )}
             {(() => {
               const dayPosts = getPostsForDate(toCellDateStr(refDate))
               if (dayPosts.length === 0) {
