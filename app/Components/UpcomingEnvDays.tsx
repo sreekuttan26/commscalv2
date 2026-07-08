@@ -90,7 +90,7 @@ function validateRow(row: any, index: number): string | CsvRow {
 export default function UpcomingEnvDays({ days, isAdmin, currentUserEmail }: Props) {
   const [lookahead, setLookahead] = useState(DEFAULT_LOOKAHEAD)
   const [editMode, setEditMode] = useState(false)
-  const [minimize, setMinimize] = useState(false)
+  const [minimize, setMinimize] = useState(true)
   const [modalDay, setModalDay] = useState<EnvDay | null | undefined>(undefined) // undefined = closed, null = adding
   const [popupDay, setPopupDay] = useState<EnvDay | null>(null)
   const [popupAnchor, setPopupAnchor] = useState<HTMLElement | null>(null)
