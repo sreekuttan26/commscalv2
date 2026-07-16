@@ -177,10 +177,11 @@ export default function PostModal({ user, prefilledDate, onClose, taskPrefill }:
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Images
             </label>
-            <p className="text-xs text-gray-400 mb-2">
+            <span className="text-xs text-gray-400 mb-2">
               Paste a Google Drive link or click <strong>Upload</strong> to upload directly.
               Uploaded files are shared automatically.
-            </p>
+              <br></br>
+            </span>
             <ImageSlotList
               initialUrls={imageUrls}
               postId={postId}

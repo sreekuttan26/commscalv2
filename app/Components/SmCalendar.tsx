@@ -2,13 +2,14 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Timestamp } from 'firebase/firestore'
 import type { SMPost } from '../smcal/types'
-import { convertDriveUrl, isLikelyVideo } from '../../lib/driveUrl'
+import { convertDriveUrl } from '../../lib/driveUrl'
 import { FaFilm } from 'react-icons/fa'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import { emailToColor, getInitial } from '../../lib/assignColor'
 import type { EnvDay } from '../hooks/useEnvDays'
 import EnvDayPopover from './EnvDayPopover'
+import { useMediaType } from '../hooks/useMediaType'
 
 // ── Status visual config ───────────────────────────────────────────────────────
 const STATUS_CFG = {
@@ -102,7 +103,7 @@ function AssigneeBadge({ post }: { post: SMPost }) {
 
 function MediaThumb({ url, className }: { url: string; className: string }) {
   const [errored, setErrored] = useState(false)
-  const isVideo = isLikelyVideo(url)
+  const isVideo = useMediaType(url) === 'video'
 
   if (errored) {
     return (

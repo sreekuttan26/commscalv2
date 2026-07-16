@@ -44,3 +44,33 @@ const VIDEO_EXTENSIONS = /\.(mp4|mov|webm|m4v)($|\?)/i
 export function isLikelyVideo(url: string): boolean {
   return /[?&]mediaType=video(&|$)/i.test(url) || VIDEO_EXTENSIONS.test(url)
 }
+
+// For manually-pasted Drive URLs with no marker or extension, the only reliable
+// signal is the file's actual MIME type from Drive. Cached in-memory per file ID
+// so a given URL is only checked once per session (see app/hooks/useMediaType.ts).
+const mediaTypeCache = new Map<string, 'image' | 'video'>()
+
+export async function getMediaType(url: string): Promise<'image' | 'video'> {
+  if (isLikelyVideo(url)) return 'video'
+
+  const fileId = extractDriveFileId(url)
+  if (!fileId) return 'image'
+
+  const cached = mediaTypeCache.get(fileId)
+  if (cached) return cached
+
+  try {
+    const res = await fetch(`/api/media-type/${fileId}`)
+    if (!res.ok) {
+      mediaTypeCache.set(fileId, 'image')
+      return 'image'
+    }
+    const { mimeType } = await res.json()
+    const type: 'image' | 'video' = mimeType?.startsWith('video/') ? 'video' : 'image'
+    mediaTypeCache.set(fileId, type)
+    return type
+  } catch {
+    mediaTypeCache.set(fileId, 'image')
+    return 'image'
+  }
+}

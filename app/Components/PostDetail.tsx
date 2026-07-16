@@ -15,7 +15,8 @@ import {
 } from 'firebase/firestore'
 import { db, firestore } from '../firebase/firebase'
 import type { SMPost, SMComment, HistoryEvent, PostActor, AppNotification } from '../smcal/types'
-import { convertDriveUrl, convertDriveUrlFull, getDriveDownloadUrl, isLikelyVideo } from '../../lib/driveUrl'
+import { convertDriveUrl, convertDriveUrlFull, getDriveDownloadUrl } from '../../lib/driveUrl'
+import { useMediaType } from '../hooks/useMediaType'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import CommentThread from './CommentThread'
@@ -51,6 +52,104 @@ interface Props {
 function formatIST(ts: Timestamp | null | undefined): string {
   if (!ts?.toDate) return '—'
   return dayjs(ts.toDate()).tz(IST).format('DD MMM YYYY, hh:mm A')
+}
+
+// Extracted so useMediaType (which resolves pasted-URL videos asynchronously via
+// Drive metadata) can be called at this component's own top level, not inside the
+// parent's .map() callback — hooks can't be called from a nested function.
+function MediaGridItem({
+  url, count, isSelected, onSelect, onLightbox,
+}: {
+  url: string
+  count: number
+  isSelected: boolean
+  onSelect: () => void
+  onLightbox: () => void
+}) {
+  const isVideo = useMediaType(url) === 'video'
+
+  return (
+    <div className="relative group">
+      <div
+        onClick={() => isVideo ? window.open(url, '_blank', 'noopener,noreferrer') : onSelect()}
+        className={`aspect-video rounded-xl overflow-hidden border-2 cursor-pointer
+          relative transition-all
+          ${isSelected
+            ? 'border-blue-400 shadow-lg ring-2 ring-blue-200'
+            : 'border-gray-200 hover:border-blue-300'
+          }`}
+      >
+        <img
+          src={convertDriveUrl(url)}
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            const wrap = (e.target as HTMLImageElement).parentElement!
+            wrap.innerHTML = isVideo
+              ? `
+              <div class="w-full h-full bg-gray-100 flex flex-col items-center
+                justify-center gap-1.5 p-3 text-gray-400">
+                <svg width="20" height="20" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true">
+                  <path d="M384 32H320V16C320 7.164 312.8 0 304 0H144C135.2 0 128 7.164 128 16V32H64c-35.35 0-64 28.65-64 64v352c0 35.35 28.65 64 64 64h320c35.35 0 64-28.65 64-64V96C448 60.65 419.3 32 384 32zM160 32h128v32H160V32zM416 448c0 17.64-14.36 32-32 32H64c-17.64 0-32-14.36-32-32V96c0-17.64 14.36-32 32-32h320c17.64 0 32 14.36 32 32V448zM176 128c-8.836 0-16 7.164-16 16v224c0 8.836 7.164 16 16 16s16-7.164 16-16V144C192 135.2 184.8 128 176 128zM272 128c-8.836 0-16 7.164-16 16v224c0 8.836 7.164 16 16 16s16-7.164 16-16V144C288 135.2 280.8 128 272 128z"/>
+                </svg>
+                <a href="${url}" target="_blank" rel="noopener noreferrer"
+                  class="text-[10px] text-blue-400 underline text-center">
+                  Open in Drive ↗
+                </a>
+              </div>`
+              : `
+              <div class="w-full h-full bg-gray-50 flex flex-col items-center
+                justify-center gap-1.5 p-3">
+                <p class="text-xs text-gray-400 text-center">Preview unavailable</p>
+                <a href="${url}" target="_blank" rel="noopener noreferrer"
+                  class="text-[10px] text-blue-400 underline text-center">
+                  Open in Drive ↗
+                </a>
+              </div>`
+          }}
+        />
+        {isVideo && (
+          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="w-9 h-9 rounded-full bg-black/50 text-white
+              flex items-center justify-center text-sm">▶</span>
+          </span>
+        )}
+        {/* View / Download overlay — images only; videos open in Drive on click */}
+        {!isVideo && (
+          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center
+            gap-2 px-2 py-2 bg-gradient-to-t from-black/60 to-transparent
+            opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              onClick={(e) => { e.stopPropagation(); onLightbox() }}
+              className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
+                bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
+            >
+              View
+            </button>
+            <a
+              href={getDriveDownloadUrl(url)}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
+                bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
+            >
+              Download
+            </a>
+          </div>
+        )}
+      </div>
+      {/* Comment count badge — click opens the comment panel for this slot */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onSelect() }}
+        title="Comments"
+        className={`absolute -top-2 -right-2 w-5 h-5 text-[10px] rounded-full
+          flex items-center justify-center font-bold shadow-sm
+          ${count > 0 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'}`}
+      >
+        {count}
+      </button>
+    </div>
+  )
 }
 
 // ── Component ──────────────────────────────────────────────────────────────────
@@ -786,97 +885,16 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           ) : (post.images?.length ?? 0) > 0 ? (
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {(post.images || []).map((url, i) => {
-                  const count = unresolvedFor(`image:${i}`)
-                  const isSelected = selectedImg === i
-                  const isVideo = isLikelyVideo(url)
-                  return (
-                    <div key={i} className="relative group">
-                      <div
-                        onClick={() =>
-                          isVideo
-                            ? window.open(url, '_blank', 'noopener,noreferrer')
-                            : setSelectedImg(isSelected ? null : i)
-                        }
-                        className={`aspect-video rounded-xl overflow-hidden border-2 cursor-pointer
-                          relative transition-all
-                          ${isSelected
-                            ? 'border-blue-400 shadow-lg ring-2 ring-blue-200'
-                            : 'border-gray-200 hover:border-blue-300'
-                          }`}
-                      >
-                        <img
-                          src={convertDriveUrl(url)}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            const wrap = (e.target as HTMLImageElement).parentElement!
-                            wrap.innerHTML = isVideo
-                              ? `
-                              <div class="w-full h-full bg-gray-100 flex flex-col items-center
-                                justify-center gap-1.5 p-3 text-gray-400">
-                                <svg width="20" height="20" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true">
-                                  <path d="M384 32H320V16C320 7.164 312.8 0 304 0H144C135.2 0 128 7.164 128 16V32H64c-35.35 0-64 28.65-64 64v352c0 35.35 28.65 64 64 64h320c35.35 0 64-28.65 64-64V96C448 60.65 419.3 32 384 32zM160 32h128v32H160V32zM416 448c0 17.64-14.36 32-32 32H64c-17.64 0-32-14.36-32-32V96c0-17.64 14.36-32 32-32h320c17.64 0 32 14.36 32 32V448zM176 128c-8.836 0-16 7.164-16 16v224c0 8.836 7.164 16 16 16s16-7.164 16-16V144C192 135.2 184.8 128 176 128zM272 128c-8.836 0-16 7.164-16 16v224c0 8.836 7.164 16 16 16s16-7.164 16-16V144C288 135.2 280.8 128 272 128z"/>
-                                </svg>
-                                <a href="${url}" target="_blank" rel="noopener noreferrer"
-                                  class="text-[10px] text-blue-400 underline text-center">
-                                  Open in Drive ↗
-                                </a>
-                              </div>`
-                              : `
-                              <div class="w-full h-full bg-gray-50 flex flex-col items-center
-                                justify-center gap-1.5 p-3">
-                                <p class="text-xs text-gray-400 text-center">Preview unavailable</p>
-                                <a href="${url}" target="_blank" rel="noopener noreferrer"
-                                  class="text-[10px] text-blue-400 underline text-center">
-                                  Open in Drive ↗
-                                </a>
-                              </div>`
-                          }}
-                        />
-                        {isVideo && (
-                          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="w-9 h-9 rounded-full bg-black/50 text-white
-                              flex items-center justify-center text-sm">▶</span>
-                          </span>
-                        )}
-                        {/* View / Download overlay — images only; videos open in Drive on click */}
-                        {!isVideo && (
-                          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center
-                            gap-2 px-2 py-2 bg-gradient-to-t from-black/60 to-transparent
-                            opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setLightboxUrl(url) }}
-                              className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
-                                bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
-                            >
-                              View
-                            </button>
-                            <a
-                              href={getDriveDownloadUrl(url)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={(e) => e.stopPropagation()}
-                              className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
-                                bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
-                            >
-                              Download
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                      {/* Comment count badge — click opens the comment panel for this slot */}
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setSelectedImg(isSelected ? null : i) }}
-                        title="Comments"
-                        className={`absolute -top-2 -right-2 w-5 h-5 text-[10px] rounded-full
-                          flex items-center justify-center font-bold shadow-sm
-                          ${count > 0 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'}`}
-                      >
-                        {count}
-                      </button>
-                    </div>
-                  )
-                })}
+                {(post.images || []).map((url, i) => (
+                  <MediaGridItem
+                    key={i}
+                    url={url}
+                    count={unresolvedFor(`image:${i}`)}
+                    isSelected={selectedImg === i}
+                    onSelect={() => setSelectedImg(selectedImg === i ? null : i)}
+                    onLightbox={() => setLightboxUrl(url)}
+                  />
+                ))}
               </div>
 
               {/* Inline comment panel for selected image */}

@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { FaFilm } from 'react-icons/fa'
-import { convertDriveUrl, isLikelyVideo } from '../../lib/driveUrl'
+import { convertDriveUrl } from '../../lib/driveUrl'
+import { useMediaType } from '../hooks/useMediaType'
 
 const ALLOWED_TYPES = [
   'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif',
@@ -9,6 +10,7 @@ const ALLOWED_TYPES = [
 ]
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_VIDEO_SIZE = 25 * 1024 * 1024 // 25 MB
+const temp_manual_folder = 'https://drive.google.com/drive/u/0/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI'
 
 type SlotStatus = 'idle' | 'uploading' | 'success' | 'error'
 
@@ -48,8 +50,8 @@ function validateFile(file: File): string | null {
 // ── Thumbnail ─────────────────────────────────────────────────────────────────
 function SlotThumbnail({ url, status }: { url: string; status: SlotStatus }) {
   const [thumbSrc, setThumbSrc] = useState(() => url.trim() ? convertDriveUrl(url) : '')
-  const [imgErr,   setImgErr]   = useState(false)
-  const isVideo = url.trim() ? isLikelyVideo(url) : false
+  const [imgErr, setImgErr] = useState(false)
+  const isVideo = useMediaType(url.trim() ? url : undefined) === 'video'
 
   // Debounce URL → thumbnail to avoid a fetch on every keystroke
   useEffect(() => {
@@ -73,7 +75,7 @@ function SlotThumbnail({ url, status }: { url: string; status: SlotStatus }) {
     return (
       <div className={`${box} bg-gray-100 text-gray-300`}>
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+          <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
         </svg>
       </div>
     )
@@ -90,7 +92,7 @@ function SlotThumbnail({ url, status }: { url: string; status: SlotStatus }) {
     return (
       <div className={`${box} bg-red-50 border border-red-100 text-red-300`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M21 5v6.59l-2.99-3-4.01 4.01-4-4-4 4-3-3.01V5c0-1.1.9-2 2-2h14c1.1 0 2 .9 2 2zm-3 6.42 2.99 3V19c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-6.58l2.99 3 4-4 4 4 4.01-4.01z"/>
+          <path d="M21 5v6.59l-2.99-3-4.01 4.01-4-4-4 4-3-3.01V5c0-1.1.9-2 2-2h14c1.1 0 2 .9 2 2zm-3 6.42 2.99 3V19c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2v-6.58l2.99 3 4-4 4 4 4.01-4.01z" />
         </svg>
       </div>
     )
@@ -138,7 +140,7 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingIdRef = useRef<string | null>(null)
   const postTitleRef = useRef(postTitle)
-  const onChangeRef  = useRef(onChange)
+  const onChangeRef = useRef(onChange)
 
   useEffect(() => { postTitleRef.current = postTitle }, [postTitle])
   useEffect(() => { onChangeRef.current = onChange })
@@ -185,7 +187,7 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files     = Array.from(e.target.files || [])
+    const files = Array.from(e.target.files || [])
     const triggerId = pendingIdRef.current
     pendingIdRef.current = null
     if (!files.length || !triggerId) return
@@ -196,7 +198,7 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
     const newStates: SlotState[] = files.map((file, j) => {
       const err = validateFile(file)
       return err
-        ? { id: fileIds[j], url: '', status: 'error'     as SlotStatus, errorMsg: err }
+        ? { id: fileIds[j], url: '', status: 'error' as SlotStatus, errorMsg: err }
         : { id: fileIds[j], url: '', status: 'uploading' as SlotStatus }
     })
 
@@ -292,7 +294,7 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
                 className={`w-full border rounded-xl px-3 py-2 text-sm
                   focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent pr-8
                   ${slot.status === 'uploading' ? 'opacity-60 cursor-not-allowed' : ''}
-                  ${slot.status === 'error'   ? 'border-red-300 bg-red-50/50'   : ''}
+                  ${slot.status === 'error' ? 'border-red-300 bg-red-50/50' : ''}
                   ${slot.status === 'success' ? 'border-green-300 bg-green-50/50' : ''}
                   ${slot.status === 'idle' || slot.status === 'uploading' ? 'border-gray-200' : ''}`}
                 placeholder="https://drive.google.com/file/d/…"
@@ -362,7 +364,9 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
           {/* Error + Retry */}
           {slot.status === 'error' && slot.errorMsg && (
             <p className="text-xs text-red-500 pl-[54px] mt-0.5 flex items-center gap-2">
-              <span>{slot.errorMsg}</span>
+              <span>{slot.errorMsg}
+                <a className='text-blue-500' target='_blank' href='https://drive.google.com/drive/u/0/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI'> Drive folder</a>
+              </span>
               <button
                 type="button"
                 onClick={() => triggerUpload(slot.id)}
