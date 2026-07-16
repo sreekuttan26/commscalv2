@@ -2,7 +2,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { Timestamp } from 'firebase/firestore'
 import type { SMPost } from '../smcal/types'
-import { convertDriveUrl } from '../../lib/driveUrl'
+import { convertDriveUrl, isLikelyVideo } from '../../lib/driveUrl'
+import { FaFilm } from 'react-icons/fa'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import { emailToColor, getInitial } from '../../lib/assignColor'
@@ -99,12 +100,41 @@ function AssigneeBadge({ post }: { post: SMPost }) {
   )
 }
 
+function MediaThumb({ url, className }: { url: string; className: string }) {
+  const [errored, setErrored] = useState(false)
+  const isVideo = isLikelyVideo(url)
+
+  if (errored) {
+    return (
+      <div className={`${className} bg-gray-100 text-gray-300 flex items-center justify-center flex-shrink-0`}>
+        <FaFilm size={12} />
+      </div>
+    )
+  }
+
+  return (
+    <div className={`${className} relative overflow-hidden flex-shrink-0`}>
+      <img
+        src={convertDriveUrl(url)}
+        className="w-full h-full object-cover"
+        onError={() => setErrored(true)}
+      />
+      {isVideo && (
+        <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="w-3.5 h-3.5 rounded-full bg-black/50 text-white
+            flex items-center justify-center text-[7px] leading-none">▶</span>
+        </span>
+      )}
+    </div>
+  )
+}
+
 function PostCard({ post, onClick }: { post: SMPost; onClick: () => void }) {
   const cfg  = STATUS_CFG[post.status] ?? STATUS_CFG.draft
   const time = post.scheduledAt?.toDate
     ? dayjs(post.scheduledAt.toDate()).tz(IST).format('h:mm A')
     : ''
-  const thumb = post.images?.[0] ? convertDriveUrl(post.images[0]) : null
+  const firstMedia = post.images?.[0] || null
 
   return (
     <div
@@ -114,13 +144,7 @@ function PostCard({ post, onClick }: { post: SMPost; onClick: () => void }) {
     >
       <AssigneeBadge post={post} />
       <div className="flex items-center gap-1.5">
-        {thumb && (
-          <img
-            src={thumb}
-            className="w-6 h-6 rounded object-cover flex-shrink-0"
-            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-          />
-        )}
+        {firstMedia && <MediaThumb url={firstMedia} className="w-6 h-6 rounded" />}
         <div className="min-w-0 flex-1 overflow-hidden">
           <p className="font-medium text-gray-800 truncate leading-tight">{post.title}</p>
           <div className="flex items-center gap-1">
@@ -530,14 +554,7 @@ export default function SmCalendar({ posts, envDays = [], onPostClick, onCellCli
                         <AssigneeBadge post={post} />
                         <div className="flex items-start gap-3 sm:gap-4">
                           {post.images?.[0] && (
-                            <img
-                              src={convertDriveUrl(post.images[0])}
-                              className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl
-                                object-cover flex-shrink-0"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = 'none'
-                              }}
-                            />
+                            <MediaThumb url={post.images[0]} className="w-14 h-14 sm:w-20 sm:h-20 rounded-xl" />
                           )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">

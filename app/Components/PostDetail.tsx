@@ -13,9 +13,9 @@ import {
   Timestamp,
   updateDoc,
 } from 'firebase/firestore'
-import { firestore } from '../firebase/firebase'
+import { db, firestore } from '../firebase/firebase'
 import type { SMPost, SMComment, HistoryEvent, PostActor, AppNotification } from '../smcal/types'
-import { convertDriveUrl, convertDriveUrlFull, getDriveDownloadUrl } from '../../lib/driveUrl'
+import { convertDriveUrl, convertDriveUrlFull, getDriveDownloadUrl, isLikelyVideo } from '../../lib/driveUrl'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import CommentThread from './CommentThread'
@@ -24,13 +24,15 @@ import ImageSlotList from './ImageSlotList'
 import { useUsers } from '../constants'
 import { notify } from '../../lib/notifications'
 import { emailToColor, getInitial } from '../../lib/assignColor'
+import { format } from 'date-fns'
+import { equalTo, get, orderByChild, query as rdbQuerry, ref, update } from 'firebase/database'
 
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CFG = {
-  draft:     { badge: 'bg-gray-100   text-gray-600   border-gray-200',   icon: '✏️',  label: 'Draft'     },
+  draft: { badge: 'bg-gray-100   text-gray-600   border-gray-200', icon: '✏️', label: 'Draft' },
   scheduled: { badge: 'bg-purple-100 text-purple-700 border-purple-200', icon: '🕐', label: 'Scheduled' },
-  approved:  { badge: 'bg-blue-100   text-blue-700   border-blue-200',   icon: '✓',  label: 'Approved'  },
-  posted:    { badge: 'bg-green-100  text-green-700  border-green-200',  icon: '📤', label: 'Posted'    },
+  approved: { badge: 'bg-blue-100   text-blue-700   border-blue-200', icon: '✓', label: 'Approved' },
+  posted: { badge: 'bg-green-100  text-green-700  border-green-200', icon: '📤', label: 'Posted' },
 } as const
 
 interface CurrentUser {
@@ -53,23 +55,23 @@ function formatIST(ts: Timestamp | null | undefined): string {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function PostDetail({ postId, user, onClose }: Props) {
-  const [post, setPost]       = useState<SMPost | null>(null)
+  const [post, setPost] = useState<SMPost | null>(null)
   const [comments, setComments] = useState<SMComment[]>([])
   const [history, setHistory] = useState<HistoryEvent[]>([])
   const [loading, setLoading] = useState(true)
 
   // Edit states
-  const [editingTitle,    setEditingTitle]    = useState(false)
-  const [titleDraft,      setTitleDraft]      = useState('')
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleDraft, setTitleDraft] = useState('')
   const [editingSchedule, setEditingSchedule] = useState(false)
-  const [scheduleDraft,   setScheduleDraft]   = useState('')
-  const [editingBody,     setEditingBody]     = useState(false)
-  const [bodyDraft,       setBodyDraft]       = useState('')
-  const [editingImages,   setEditingImages]   = useState(false)
-  const [imagesDraft,     setImagesDraft]     = useState<string[]>([])
-  const [editingDocUrl,   setEditingDocUrl]   = useState(false)
-  const [docUrlDraft,     setDocUrlDraft]     = useState('')
-  const [isReguser,     setisRegUser]     = useState(false)
+  const [scheduleDraft, setScheduleDraft] = useState('')
+  const [editingBody, setEditingBody] = useState(false)
+  const [bodyDraft, setBodyDraft] = useState('')
+  const [editingImages, setEditingImages] = useState(false)
+  const [imagesDraft, setImagesDraft] = useState<string[]>([])
+  const [editingDocUrl, setEditingDocUrl] = useState(false)
+  const [docUrlDraft, setDocUrlDraft] = useState('')
+  const [isReguser, setisRegUser] = useState(false)
 
   // Image comment panel
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
@@ -89,9 +91,9 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [copied, setCopied] = useState(false)
   const copyShareLink = () => {
     if (!post) return
-    const url      = `${window.location.origin}/smcal/${postId}`
+    const url = `${window.location.origin}/smcal/${postId}`
     const dateTime = formatIST(post.scheduledAt)
-    const text     = `${post.title} — ${dateTime}\n${url}`
+    const text = `${post.title} — ${dateTime}\n${url}`
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -132,9 +134,9 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-   useEffect(()=>{
-  setisRegUser(users.some((u) => u.email === user?.email));
-  },[users, user])
+  useEffect(() => {
+    setisRegUser(users.some((u) => u.email === user?.email));
+  }, [users, user])
 
   // ── Loading / not found ──────────────────────────────────────────────────────
   if (loading) {
@@ -155,33 +157,33 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     )
   }
 
- 
+
 
   // ── Derived values ───────────────────────────────────────────────────────────
   // Assignee acts as "creator" for permission purposes; falls back to createdBy for
   // legacy posts that predate the assignedTo field.
-  const isAssignee  = post.assignedTo
+  const isAssignee = post.assignedTo
     ? post.assignedTo === user?.email
     : post.createdBy?.uid === user?.uid
-  const isAdmin     = users.find((u) => u.email === user?.email)?.role === 'admin'
-  const cfg         = STATUS_CFG[post.status] ?? STATUS_CFG.draft
-  const myApproval  = (post.approvedBy || []).find((a) => a.uid === user?.uid)
+  const isAdmin = users.find((u) => u.email === user?.email)?.role === 'admin'
+  const cfg = STATUS_CFG[post.status] ?? STATUS_CFG.draft
+  const myApproval = (post.approvedBy || []).find((a) => a.uid === user?.uid)
   const hasApproval = (post.approvedBy?.length ?? 0) > 0
 
- 
+
   console.log(isReguser)
   console.log(users)
 
   const actor: PostActor = {
-    uid:      user?.uid      || '',
-    name:     user?.displayName || 'User',
+    uid: user?.uid || '',
+    name: user?.displayName || 'User',
     photoURL: user?.photoURL || '',
-    email:    user?.email || '',
+    email: user?.email || '',
   }
 
   const notifyActor = {
-    email:    user?.email || '',
-    name:     user?.displayName || 'User',
+    email: user?.email || '',
+    name: user?.displayName || 'User',
     photoURL: user?.photoURL || '',
   }
 
@@ -217,7 +219,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       actor,
       timestamp: serverTimestamp(),
       ...(before !== undefined ? { before } : {}),
-      ...(after  !== undefined ? { after  } : {}),
+      ...(after !== undefined ? { after } : {}),
     })
   }
 
@@ -234,15 +236,15 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ postId, newTitle: titleDraft.trim() }),
-    }).catch(() => {})
+    }).catch(() => { })
     setSaving(false); setEditingTitle(false)
   }
 
   const saveSchedule = async () => {
     setSaving(true)
     const newDate = dayjs.tz(scheduleDraft, IST).toDate()
-    const before  = formatIST(post.scheduledAt)
-    const after   = dayjs.tz(scheduleDraft, IST).format('DD MMM YYYY, hh:mm A')
+    const before = formatIST(post.scheduledAt)
+    const after = dayjs.tz(scheduleDraft, IST).format('DD MMM YYYY, hh:mm A')
     await updateDoc(doc(firestore, 'posts', postId), { scheduledAt: Timestamp.fromDate(newDate) })
     await log('schedule_changed', before, after)
     await notifyOwners('post_edited', `${actor.name} rescheduled "${post.title}"`)
@@ -261,16 +263,16 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const saveImages = async () => {
     setSaving(true)
     const trimmed = imagesDraft.filter((u) => u.trim())
-    const oldSet  = new Set(post.images)
-    const newSet  = new Set(trimmed)
-    const added   = trimmed.filter((u) => !oldSet.has(u))
+    const oldSet = new Set(post.images)
+    const newSet = new Set(trimmed)
+    const added = trimmed.filter((u) => !oldSet.has(u))
     const removed = post.images.filter((u) => !newSet.has(u))
     // Detect reorder: URLs that exist in both old and new, but in a different order
     const oldKept = post.images.filter((u) => newSet.has(u))
     const newKept = trimmed.filter((u) => oldSet.has(u))
     const reordered = oldKept.length === newKept.length && oldKept.some((u, i) => u !== newKept[i])
     await updateDoc(doc(firestore, 'posts', postId), { images: trimmed })
-    for (const url of added)   await log('image_added',   undefined, url)
+    for (const url of added) await log('image_added', undefined, url)
     for (const url of removed) await log('image_removed', url, undefined)
     if (reordered) await log('image_reordered', JSON.stringify(oldKept), JSON.stringify(newKept))
     if (added.length || removed.length || reordered) {
@@ -304,8 +306,8 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       await notifyOwners('approval_reverted', `${actor.name} revoked their approval on "${post.title}"`)
     } else {
       const approval = {
-        uid:      user!.uid,
-        name:     user!.displayName || 'User',
+        uid: user!.uid,
+        name: user!.displayName || 'User',
         photoURL: user!.photoURL || '',
         approvedAt: Timestamp.now(),
       }
@@ -329,18 +331,79 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     await log('status_changed', prev, status)
     await notifyOwners('status_changed', `${actor.name} changed the status of "${post.title}" from ${prev} to ${status}`)
 
-    // Bidirectional sync with linked task
+    // Bidirectional sync with linked task. A missing task (deleted via the
+    // /database cleanup flow) is a clean state, not an error — skip silently.
     if (post.sourceTaskId) {
       const taskRef = doc(firestore, 'tasks', post.sourceTaskId)
-      if (status === 'posted') {
-        await updateDoc(taskRef, { current_status: 'Posted' })
-      } else if (prev === 'posted') {
-        const taskSnap = await getDoc(taskRef)
-        if (taskSnap.exists() && taskSnap.data().current_status === 'Posted') {
-          await updateDoc(taskRef, { current_status: 'In Progress' })
+      const taskSnap = await getDoc(taskRef)
+      if (taskSnap.exists()) {
+        const task = taskSnap.data()
+        const completedBy: string[] = Array.isArray(task.completed_by) ? task.completed_by : []
+        const actorEmail = actor.email || ''
+        if (status === 'posted') {
+          await updateDoc(taskRef, {
+            current_status: 'Posted',
+            completed_by: completedBy.includes(actorEmail) ? completedBy : [...completedBy, actorEmail],
+          })
+          await updatedsmstatus(post.sourceTaskId, "Posted", "")
+        } else if (prev === 'posted') {
+          await updateDoc(taskRef, {
+            current_status: 'In Progress',
+            completed_by: completedBy.filter((e) => e !== actorEmail),
+          })
+
+          await updatedsmstatus(post.sourceTaskId, "Working", "")
         }
       }
     }
+  }
+
+  const updatedsmstatus = async (
+    id: string,
+    status: string,
+    date: string
+  ) => {
+    try {
+      const itemRef = ref(db, `items/${id}`);
+
+      await update(itemRef, {
+        sm_status: status,
+      });
+
+      console.log("sm_status updated");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const updateSheet = (date: string, title: string, current_status: string) => {
+    //console.log("updating sheet for posted")
+    const base = "https://script.google.com/macros/s/AKfycbzU4fJk30VytfQGqEuMWDXLxkNGuVL5jSz_ds2MFBXv3-uF3xRswLHX3eRfP9h1J-OAzA/exec"
+    const formattedDate = format(date, 'MMM yy');
+    const params = {
+      sheetname: formattedDate,
+      search: title,
+      updatevalue: current_status
+    }
+    const query = Object.entries(params)
+      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v ?? '')}`)
+      .join('&');
+
+    const fullUrl = `${base}?${query}`;
+
+    //console.log("Full URL:", fullUrl);
+
+
+    fetch(fullUrl).
+      then(res => res.text())
+      .then(response => {
+        alert("Resp:" + response);
+      })
+      .catch(error => {
+
+
+        // alert("Error:" + error);
+      });
+
   }
 
   // ── Delete ───────────────────────────────────────────────────────────────────
@@ -356,7 +419,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     const newUser = users.find((u) => u.email === newEmail)
     const newName = newUser?.displayName || newEmail
     const before = JSON.stringify({ email: post.assignedTo || '', name: post.assignedToName || '' })
-    const after  = JSON.stringify({ email: newEmail, name: newName })
+    const after = JSON.stringify({ email: newEmail, name: newName })
     await updateDoc(doc(firestore, 'posts', postId), {
       assignedTo: newEmail,
       assignedToName: newName,
@@ -382,7 +445,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     )
     setEditingSchedule(true)
   }
-  const startEditBody   = () => { setBodyDraft(post.bodyCopy || ''); setEditingBody(true) }
+  const startEditBody = () => { setBodyDraft(post.bodyCopy || ''); setEditingBody(true) }
   const startEditImages = () => { setImagesDraft([...(post.images || [])]); setEditingImages(true) }
   const startEditDocUrl = () => { setDocUrlDraft(post.docUrl || ''); setEditingDocUrl(true) }
 
@@ -393,13 +456,13 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       {/* ── Sticky header ── */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-200 px-6 py-3">
         <div className="max-w-5xl mx-auto flex items-center gap-4">
-          {isReguser && 
-          <button
-            onClick={onClose}
-            className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex-shrink-0"
-          >
-            ← Back
-          </button>}
+          {isReguser &&
+            <button
+              onClick={onClose}
+              className="text-sm text-gray-500 hover:text-gray-800 transition-colors flex-shrink-0"
+            >
+              ← Back
+            </button>}
 
           {/* Title (editable) */}
           <div className="flex items-center gap-2 flex-1 min-w-0 justify-center">
@@ -437,13 +500,13 @@ export default function PostDetail({ postId, user, onClose }: Props) {
 
 
                 {isReguser &&
-                <button
-                  onClick={startEditTitle}
-                  className="text-gray-300 hover:text-gray-600 flex-shrink-0 text-base"
-                  title="Edit title"
-                >
-                  ✎
-                </button>}
+                  <button
+                    onClick={startEditTitle}
+                    className="text-gray-300 hover:text-gray-600 flex-shrink-0 text-base"
+                    title="Edit title"
+                  >
+                    ✎
+                  </button>}
               </>
             )}
           </div>
@@ -508,13 +571,13 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                   {formatIST(post.scheduledAt)}
                 </p>
                 {isReguser &&
-                <button
-                  onClick={startEditSchedule}
-                  className="text-gray-300 hover:text-gray-600 text-base"
-                  title="Edit schedule"
-                >
-                  ✎
-                </button>}
+                  <button
+                    onClick={startEditSchedule}
+                    className="text-gray-300 hover:text-gray-600 text-base"
+                    title="Edit schedule"
+                  >
+                    ✎
+                  </button>}
               </div>
             )}
           </div>
@@ -661,13 +724,13 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                   <p className="text-sm text-gray-400 italic">No document linked.</p>
                 )}
                 {isReguser &&
-                <button
-                  onClick={startEditDocUrl}
-                  className="text-gray-300 hover:text-gray-600 flex-shrink-0 text-base"
-                  title="Edit document URL"
-                >
-                  ✎
-                </button>}
+                  <button
+                    onClick={startEditDocUrl}
+                    className="text-gray-300 hover:text-gray-600 flex-shrink-0 text-base"
+                    title="Edit document URL"
+                  >
+                    ✎
+                  </button>}
               </div>
             )}
           </div>
@@ -678,11 +741,11 @@ export default function PostDetail({ postId, user, onClose }: Props) {
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-gray-800">Images</h2>
             {!editingImages ? (
-              
+
 
               <button
                 onClick={startEditImages}
-                className={`text-sm text-blue-500 hover:text-blue-700 ${isReguser?'block':'hidden'}`}
+                className={`text-sm text-blue-500 hover:text-blue-700 ${isReguser ? 'block' : 'hidden'}`}
               >
                 Edit Images
               </button>
@@ -724,12 +787,17 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             <>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {(post.images || []).map((url, i) => {
-                  const count     = unresolvedFor(`image:${i}`)
+                  const count = unresolvedFor(`image:${i}`)
                   const isSelected = selectedImg === i
+                  const isVideo = isLikelyVideo(url)
                   return (
                     <div key={i} className="relative group">
                       <div
-                        onClick={() => setSelectedImg(isSelected ? null : i)}
+                        onClick={() =>
+                          isVideo
+                            ? window.open(url, '_blank', 'noopener,noreferrer')
+                            : setSelectedImg(isSelected ? null : i)
+                        }
                         className={`aspect-video rounded-xl overflow-hidden border-2 cursor-pointer
                           relative transition-all
                           ${isSelected
@@ -742,7 +810,19 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                           className="w-full h-full object-cover"
                           onError={(e) => {
                             const wrap = (e.target as HTMLImageElement).parentElement!
-                            wrap.innerHTML = `
+                            wrap.innerHTML = isVideo
+                              ? `
+                              <div class="w-full h-full bg-gray-100 flex flex-col items-center
+                                justify-center gap-1.5 p-3 text-gray-400">
+                                <svg width="20" height="20" viewBox="0 0 448 512" fill="currentColor" aria-hidden="true">
+                                  <path d="M384 32H320V16C320 7.164 312.8 0 304 0H144C135.2 0 128 7.164 128 16V32H64c-35.35 0-64 28.65-64 64v352c0 35.35 28.65 64 64 64h320c35.35 0 64-28.65 64-64V96C448 60.65 419.3 32 384 32zM160 32h128v32H160V32zM416 448c0 17.64-14.36 32-32 32H64c-17.64 0-32-14.36-32-32V96c0-17.64 14.36-32 32-32h320c17.64 0 32 14.36 32 32V448zM176 128c-8.836 0-16 7.164-16 16v224c0 8.836 7.164 16 16 16s16-7.164 16-16V144C192 135.2 184.8 128 176 128zM272 128c-8.836 0-16 7.164-16 16v224c0 8.836 7.164 16 16 16s16-7.164 16-16V144C288 135.2 280.8 128 272 128z"/>
+                                </svg>
+                                <a href="${url}" target="_blank" rel="noopener noreferrer"
+                                  class="text-[10px] text-blue-400 underline text-center">
+                                  Open in Drive ↗
+                                </a>
+                              </div>`
+                              : `
                               <div class="w-full h-full bg-gray-50 flex flex-col items-center
                                 justify-center gap-1.5 p-3">
                                 <p class="text-xs text-gray-400 text-center">Preview unavailable</p>
@@ -753,43 +833,47 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                               </div>`
                           }}
                         />
-                        {/* View / Download overlay */}
-                        <div className="absolute inset-x-0 bottom-0 flex items-center justify-center
-                          gap-2 px-2 py-2 bg-gradient-to-t from-black/60 to-transparent
-                          opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); setLightboxUrl(url) }}
-                            className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
-                              bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
-                          >
-                            View
-                          </button>
-                          <a
-                            href={getDriveDownloadUrl(url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
-                              bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
-                          >
-                            Download
-                          </a>
-                        </div>
+                        {isVideo && (
+                          <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="w-9 h-9 rounded-full bg-black/50 text-white
+                              flex items-center justify-center text-sm">▶</span>
+                          </span>
+                        )}
+                        {/* View / Download overlay — images only; videos open in Drive on click */}
+                        {!isVideo && (
+                          <div className="absolute inset-x-0 bottom-0 flex items-center justify-center
+                            gap-2 px-2 py-2 bg-gradient-to-t from-black/60 to-transparent
+                            opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setLightboxUrl(url) }}
+                              className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
+                                bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
+                            >
+                              View
+                            </button>
+                            <a
+                              href={getDriveDownloadUrl(url)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-white text-[11px] font-medium px-2.5 py-1 rounded-lg
+                                bg-white/20 hover:bg-white/35 backdrop-blur-sm transition-colors"
+                            >
+                              Download
+                            </a>
+                          </div>
+                        )}
                       </div>
-                      {count > 0 && (
-                        <span className="absolute -top-2 -right-2 w-5 h-5 bg-orange-500
-                          text-white text-[10px] rounded-full flex items-center justify-center
-                          font-bold shadow-sm">
-                          {count}
-                        </span>
-                      )}
-                      {count === 0 && (
-                        <span className="absolute -top-2 -right-2 w-5 h-5 bg-gray-200
-                          text-gray-500 text-[10px] rounded-full flex items-center justify-center
-                          font-bold">
-                          0
-                        </span>
-                      )}
+                      {/* Comment count badge — click opens the comment panel for this slot */}
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedImg(isSelected ? null : i) }}
+                        title="Comments"
+                        className={`absolute -top-2 -right-2 w-5 h-5 text-[10px] rounded-full
+                          flex items-center justify-center font-bold shadow-sm
+                          ${count > 0 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'}`}
+                      >
+                        {count}
+                      </button>
                     </div>
                   )
                 })}
@@ -913,7 +997,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             </button>
 
             {/* Mark as Posted: creator always; any user once post is approved/posted */}
-            {user && isReguser && (  isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'posted' && (
+            {user && isReguser && (isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'posted' && (
               <button
                 onClick={() => setStatus('posted')}
                 disabled={!hasApproval}
@@ -928,7 +1012,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
 
             {/* Set to Scheduled: creator always; any user once post is approved/posted */}
-            {user && isReguser && (  isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'scheduled' && (
+            {user && isReguser && (isAssignee || post.status === 'approved' || post.status === 'posted') && post.status !== 'scheduled' && (
               <button
                 onClick={() => setStatus('scheduled')}
                 disabled={!hasApproval}
@@ -943,7 +1027,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
             )}
 
             {/* Approval warning — for anyone who can see the above buttons */}
-            {user && isReguser && (  isAssignee || post.status === 'approved' || post.status === 'posted') && !hasApproval && (
+            {user && isReguser && (isAssignee || post.status === 'approved' || post.status === 'posted') && !hasApproval && (
               <p className="w-full text-xs text-amber-600 bg-amber-50 border border-amber-200
                 rounded-xl px-3 py-2 mt-1">
                 Scheduling and posting require at least one approval.

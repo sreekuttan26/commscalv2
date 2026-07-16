@@ -204,7 +204,12 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
 
 
             });
-            alert("Task added successfully!");
+            //alert("Task added successfully!");
+            if(current_status==='Posted'){
+               await updateSmcal(selectedEntry?.id || "")
+            }
+
+            
 
             updatedsmstatus(title, current_status, selectedEntry?.date ?? "");
 
@@ -219,6 +224,12 @@ const Viewdata = ({ changeformvisibility, selectedEntry, useremail }: Props) => 
             alert("Error: " + error);
             console.error(error);
         }
+
+    }
+
+    const updateSmcal= async(id:string)=>{
+       // await updateDoc(doc(firestore, 'posts', id), { status:"Posted" })
+
 
     }
 

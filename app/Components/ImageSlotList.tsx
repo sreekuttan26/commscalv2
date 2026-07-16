@@ -1,9 +1,14 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
-import { convertDriveUrl } from '../../lib/driveUrl'
+import { FaFilm } from 'react-icons/fa'
+import { convertDriveUrl, isLikelyVideo } from '../../lib/driveUrl'
 
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
-const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
+const ALLOWED_TYPES = [
+  'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif',
+  'video/mp4', 'video/quicktime', 'video/webm',
+]
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10 MB
+const MAX_VIDEO_SIZE = 25 * 1024 * 1024 // 25 MB
 
 type SlotStatus = 'idle' | 'uploading' | 'success' | 'error'
 
@@ -23,9 +28,20 @@ interface Props {
 
 const genId = () => Math.random().toString(36).slice(2)
 
+function formatMB(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(1)}MB`
+}
+
 function validateFile(file: File): string | null {
-  if (!ALLOWED_TYPES.includes(file.type)) return `"${file.name}" is not an allowed type (PNG, JPEG, WebP, GIF)`
-  if (file.size > MAX_SIZE) return `"${file.name}" exceeds the 10 MB limit`
+  if (!ALLOWED_TYPES.includes(file.type)) return `"${file.name}" is not an allowed type (PNG, JPEG, WebP, GIF, MP4, MOV, WebM)`
+
+  const isVideo = file.type.startsWith('video/')
+  const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE
+  if (file.size > maxSize) {
+    return isVideo
+      ? `This video is ${formatMB(file.size)} — over the 25MB upload limit. Please upload it to the shared Drive folder and paste the share link in the URL field on the left.`
+      : `"${file.name}" exceeds the 10 MB limit`
+  }
   return null
 }
 
@@ -33,6 +49,7 @@ function validateFile(file: File): string | null {
 function SlotThumbnail({ url, status }: { url: string; status: SlotStatus }) {
   const [thumbSrc, setThumbSrc] = useState(() => url.trim() ? convertDriveUrl(url) : '')
   const [imgErr,   setImgErr]   = useState(false)
+  const isVideo = url.trim() ? isLikelyVideo(url) : false
 
   // Debounce URL → thumbnail to avoid a fetch on every keystroke
   useEffect(() => {
@@ -42,7 +59,7 @@ function SlotThumbnail({ url, status }: { url: string; status: SlotStatus }) {
     return () => clearTimeout(t)
   }, [url])
 
-  const box = 'w-12 h-12 rounded-md flex-shrink-0 overflow-hidden flex items-center justify-center'
+  const box = 'w-12 h-12 rounded-md flex-shrink-0 overflow-hidden flex items-center justify-center relative'
 
   if (status === 'uploading') {
     return (
@@ -63,6 +80,13 @@ function SlotThumbnail({ url, status }: { url: string; status: SlotStatus }) {
   }
 
   if (imgErr) {
+    if (isVideo) {
+      return (
+        <div className={`${box} bg-gray-100 text-gray-400`}>
+          <FaFilm size={16} />
+        </div>
+      )
+    }
     return (
       <div className={`${box} bg-red-50 border border-red-100 text-red-300`}>
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -75,6 +99,11 @@ function SlotThumbnail({ url, status }: { url: string; status: SlotStatus }) {
   return (
     <div className={box}>
       <img src={thumbSrc} alt="" className="w-full h-full object-cover" onError={() => setImgErr(true)} />
+      {isVideo && (
+        <span className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <span className="w-5 h-5 rounded-full bg-black/50 text-white flex items-center justify-center text-[9px] leading-none">▶</span>
+        </span>
+      )}
     </div>
   )
 }
@@ -243,7 +272,7 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
         ref={fileInputRef}
         type="file"
         multiple
-        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif"
+        accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,video/mp4,video/quicktime,video/webm"
         className="hidden"
         onChange={handleFileChange}
       />
@@ -286,7 +315,7 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
               type="button"
               onClick={() => triggerUpload(slot.id)}
               disabled={slot.status === 'uploading'}
-              title="Upload image file"
+              title="Upload image or video file"
               className="h-9 px-2.5 rounded-xl border border-gray-200 bg-gray-50
                 hover:bg-gray-100 text-gray-600 text-xs font-medium flex-shrink-0
                 disabled:opacity-40 disabled:cursor-not-allowed transition-colors whitespace-nowrap"
@@ -352,7 +381,7 @@ export default function ImageSlotList({ initialUrls, postId, postTitle, onChange
         className="flex items-center gap-1 text-sm text-blue-500 hover:text-blue-700
           font-medium mt-1"
       >
-        <span className="text-lg leading-none">+</span> Add image
+        <span className="text-lg leading-none">+</span> Add media
       </button>
     </div>
   )

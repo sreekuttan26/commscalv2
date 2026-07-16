@@ -33,3 +33,14 @@ export function getDriveDownloadUrl(url: string): string {
   const id = extractDriveId(url)
   return id ? `https://drive.google.com/uc?export=download&id=${id}` : url
 }
+
+// Drive's webViewLink never carries the original filename/extension, so a plain
+// extension check can't detect videos uploaded through this app. The upload route
+// appends a `mediaType=video` marker to the returned link for that case; we also
+// check for a real file extension as a best-effort fallback for manually-pasted,
+// non-Drive video URLs.
+const VIDEO_EXTENSIONS = /\.(mp4|mov|webm|m4v)($|\?)/i
+
+export function isLikelyVideo(url: string): boolean {
+  return /[?&]mediaType=video(&|$)/i.test(url) || VIDEO_EXTENSIONS.test(url)
+}

@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
 import { Readable } from 'stream'
 
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif']
-const MAX_SIZE = 10 * 1024 * 1024 // 10 MB
+export const runtime = 'nodejs'
+export const maxDuration = 60
+
+const ALLOWED_TYPES = [
+  'image/png', 'image/jpeg', 'image/jpg', 'image/webp', 'image/gif',
+  'video/mp4', 'video/quicktime', 'video/webm',
+]
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024 // 10 MB
+const MAX_VIDEO_SIZE = 25 * 1024 * 1024 // 25 MB
 
 export async function POST(req: NextRequest) {
   const FOLDER_ID    = process.env.GOOGLE_DRIVE_FOLDER_ID_SM
@@ -26,11 +33,13 @@ export async function POST(req: NextRequest) {
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ error: `File type "${file.type}" is not allowed. Use PNG, JPEG, WebP or GIF.` }, { status: 400 })
+      return NextResponse.json({ error: `File type "${file.type}" is not allowed. Use PNG, JPEG, WebP, GIF, MP4, MOV or WebM.` }, { status: 400 })
     }
 
-    if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: 'File exceeds the 10 MB size limit.' }, { status: 400 })
+    const isVideo = file.type.startsWith('video/')
+    const maxSize = isVideo ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE
+    if (file.size > maxSize) {
+      return NextResponse.json({ error: 'File exceeds size limit' }, { status: 400 })
     }
 
     const auth = new google.auth.GoogleAuth({
@@ -85,10 +94,15 @@ export async function POST(req: NextRequest) {
       requestBody: { type: 'anyone', role: 'reader' },
     })
 
+    // Drive's webViewLink never includes the filename/extension, so a video marker
+    // is appended here — isLikelyVideo() in lib/driveUrl.ts reads it back at render
+    // time to decide whether a slot shows an image or video treatment.
+    const filelink = isVideo ? `${uploaded.webViewLink}&mediaType=video` : uploaded.webViewLink
+
     return NextResponse.json({
       fileID:   uploaded.id,
       filename: uploaded.name,
-      filelink: uploaded.webViewLink,
+      filelink,
       folderID: folderId,
     }, { status: 200 })
 
