@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import Editform from '../Components/Editform';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { onAuthStateChanged } from 'firebase/auth';
+import { UserMyAppContext } from '../Context/MyAppContext';
 
 
 const Page = () => {
@@ -20,12 +21,16 @@ const Page = () => {
     const [currrentMonthEntries, setCurrentMonthEntries] = useState<itemprobes[]>([]);
     const [reg_users, setReg_users] = useState<any[]>([]);
 
+
+
     const [notification_msg, setNotification_msg] = useState<string>("");
     const [show_notification, setShow_notification] = useState<boolean>(false);
 
     const [wtw_status, setwtw_status] = useState<boolean>(true);
 
     const [sortcreatedon, setsortcreatedon] = useState(false);
+
+    const{isRegUser, user}=UserMyAppContext()
 
     useEffect(() => {
         listenToItems(setEntries)
@@ -54,6 +59,7 @@ const Page = () => {
 
 
     const [username, setUsername] = useState<string | null>("null");
+    
     useEffect(() => {
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -437,8 +443,8 @@ const Page = () => {
                         <h1 className='text-sm text-center align-middle font-semibold justify-center w-[15%]'>Category</h1>
                         <h2 className='w-[20%] text-center overflow-clip text-sm font-semibold'>Title</h2>
                         <p className='w-[20%]   overflow-clip text-sm text-center font-semibold'>mention</p>
-                        <p className='w-[5%]  overflow-clip text-sm text-center font-semibold'>WTW Status</p>
-                        <p className='w-[15%]   overflow-clip text-sm text-center font-semibold'>SM Status</p>
+                        <p className={`w-[5%]  overflow-clip text-sm text-center font-semibold ${isRegUser?"flex":"hidden"}`}>WTW Status</p>
+                        <p className={`w-[15%]   overflow-clip text-sm text-center font-semibold ${isRegUser?"":"hidden"}`}>SM Status</p>
                     </div>
                     {currrentMonthEntries.map((entry, index) => (
                         <div key={index}>
@@ -476,7 +482,7 @@ const Page = () => {
 
 
 
-                                <div className='flex justify-center items-center gap-5 '>
+                                <div className={`flex justify-center items-center gap-5  ${isRegUser?"flex":"hidden"}`}>
 
                                     <label className="custom-checkbox mt-1">
                                         <input className={``}
@@ -507,7 +513,7 @@ const Page = () => {
 
 
 
-                                <p className='w-[15%]  overflow-clip text-sm text-center'>
+                                <p className={`w-[15%]  overflow-clip text-sm text-center ${isRegUser?"":"hidden"}`}>
                                     <select className='bg-transparent focus:ring-0 focus:outline-0' value={entry.sm_status} onChange={(e) => updatedsmstatus(entry.title, e.target.value, entry.date, entry.id ? entry.id : '00')}>
                                         <option value="">Select</option>
                                         <option value="Working">Working</option>
@@ -569,7 +575,7 @@ const Page = () => {
 
 
                 <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: iseditformopen ? 'flex' : 'none' }}>
-                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} user={username || 'user not found'} />
+                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} user={username || 'user not found'} userEmail={user?.email ||""} />
 
                 </div>
 

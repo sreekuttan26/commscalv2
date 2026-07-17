@@ -6,10 +6,12 @@ import { add, format } from 'date-fns';
 import { onAuthStateChanged } from 'firebase/auth';
 import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { submitToSheet } from '../Posttosheet';
+import { UserMyAppContext } from '../Context/MyAppContext';
 
 type Props = {
 
     user?:string,
+    userEmail?:string,
 
     changeformvisibility: () => void | null,
     selectedEntry?: itemprobes | null
@@ -24,9 +26,11 @@ function formatTimestamp(ms: number): string {
     });
 }
 
-const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props) => {
+const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEmail="" }: Props) => {
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
+
+    const{isRegUser}=UserMyAppContext()
 
     const [username, setUsername] = useState<string | null>("null");
     useEffect(() => {
@@ -570,7 +574,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
                         </datalist>
                     </div> */}
 
-                    <div className='w-full flex flex-col '>
+                    <div className={`w-full   ${isRegUser?"flex flex-col":"hidden"} `}>
                         <label className='text-sm font-medium text-gray-600 px-2'>Dead line</label>
                         <input className={`p-2 border-2  ${deadline_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm text-red-600 `} type='date' onChange={(e) => { setSmDeadline(e.target.value) }} value={Smdeadline}></input>
                     </div>
@@ -583,7 +587,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Assign to</label>
-                    <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='assign' onKeyDown={(e) => {
+                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser?"":"hidden"}`} type='text' list='assign' onKeyDown={(e) => {
                         if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
                             if (!assign_to.includes(e.currentTarget.value.trim())) {
                                 setAssignTo([...assign_to, e.currentTarget.value.trim()]);
@@ -669,7 +673,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
                     </div>
                     
                     <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
+                        if ((e.key === 'Enter' || e.key === ',' ) && e.currentTarget.value.trim() !== "") {
                             if (!mentions.includes(e.currentTarget.value.trim())) {
                                 setMentions([...mentions, e.currentTarget.value.trim()]);
                                 e.currentTarget.value = "";
@@ -703,7 +707,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user }: Props
                 </div>
 
 
-                <div className='w-full flex flex-col justify-center gap-4 py-1 mt-4  sm:flex-row'>
+                <div className={`w-full flex flex-col justify-center gap-4 py-1 mt-4  sm:flex-row ${isRegUser ||selectedEntry?.addedBy===userEmail?"flex":"hidden"}`}>
                     <div className='px-4 py-2 border-2 border-orange-300 shadow hover:bg-orange-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => {  changeformvisibility(); }}>Cancel</div>
 
                     <div className='px-4 py-2 border-2 border-red-300 shadow hover:bg-red-500 hover:text-white rounded-2xl cursor-pointer text-center' onClick={() => { setIscnfwindowopen(true) }}>Delete</div>

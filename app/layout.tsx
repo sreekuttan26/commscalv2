@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Login from "./Components/Login";
+import { MyAppContextProvider } from "./Context/MyAppContext";
 
 
 const geistSans = Geist({
@@ -39,11 +40,15 @@ export default function RootLayout({
       <body 
         className={`${geistSans.variable} ${geistMono.variable} antialiased  bg-gray-50   `   }
       >
+        <MyAppContextProvider>
+
+        
         <div className=" absolute top-0 right-0 items-center flex justify-around gap-4 shadow-lg ">
             <Login/>
         </div>
       
         {children}
+        </MyAppContextProvider>
       </body>
     </html>
   );

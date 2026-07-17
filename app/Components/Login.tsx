@@ -46,7 +46,7 @@ const Login = ({params}:Props) => {
             if (userlist.includes(user?.email ? user.email : "")) {
                 setUsername(user?.displayName ?? "Login");
                 setUseemail(user?.email ?? "");
-            } else if(isSMCalSharePage && user?.email?.endsWith('@atree.org')){
+            } else if(user?.email?.endsWith('@atree.org')){
                 setUsername(user?.displayName ?? "Login");
                 setUseemail(user?.email ?? "");
 

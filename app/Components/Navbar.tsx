@@ -18,6 +18,7 @@ import { cleanupOldNotifications } from '../../lib/notifications'
 import { emailToColor, getInitial } from '../../lib/assignColor'
 import type { AppNotification } from '../smcal/types'
 import Image from 'next/image'
+import { UserMyAppContext } from '../Context/MyAppContext'
 
 function timeAgo(ts: AppNotification['createdAt'] | undefined | null): string {
   if (!ts?.toMillis) return ''
@@ -99,6 +100,8 @@ const Navbar = ({ current_page }: navprobes) => {
       console.error("Error signing out:", error);
     }
   };
+
+  const{isRegUser}=UserMyAppContext()
 
   return (
     <div className="flex h-full z-20 sm:w-[200px] min-h-[99vh] flex-col 
@@ -243,7 +246,7 @@ const Navbar = ({ current_page }: navprobes) => {
             onMouseEnter={() => setIsHovered(index)}
             onMouseLeave={() => setIsHovered(null)}
             className={`group w-full p-2.5 flex items-center gap-3 rounded-xl 
-              transition-all duration-200 relative overflow-hidden
+              transition-all duration-200 relative overflow-hidden ${item.no_reg || isRegUser?"flex":"hidden"}
               ${current_page === item.name
                 ? "bg-white/15 text-white shadow-lg border border-white/20"
                 : "text-blue-200 hover:bg-white/10 hover:text-white border border-transparent"

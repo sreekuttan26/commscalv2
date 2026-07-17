@@ -411,7 +411,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Mentions</label>
                     <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
-                        if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
+                        if ((e.key === 'Enter' || e.key === ',' )  && e.currentTarget.value.trim() !== "") {
                             if (!mentions.includes(e.currentTarget.value.trim())) {
                                 setMentions([...mentions, e.currentTarget.value.trim()]);
                                 e.currentTarget.value = "";

@@ -13,16 +13,17 @@ export type NavItem = {
     href: string,
     icon: string,
     reactIcon?: IconType,
+    no_reg?:boolean,
 }
 
 export const nav_items: NavItem[] = [
-    { name: "Dashboard", href: "/", icon: "/dashboard.png"},
-    { name: "My Tasks", href: "/task", icon: "/task.png" },
-    { name: "Database", href: "/database", icon: "/db.png"},
-    { name: "SM Cal", href: "/smcal", icon: "/sm_plan.png" },
+    { name: "Dashboard", href: "/", icon: "/dashboard.png", no_reg:true},
+    { name: "My Tasks", href: "/task", icon: "/task.png", no_reg:false },
+    { name: "Database", href: "/database", icon: "/db.png", no_reg:true},
+    { name: "SM Cal", href: "/smcal", icon: "/sm_plan.png" ,no_reg:false},
     // { name: "Website", href: "/website", icon: "/website.png" },
-    { name: "InstaLinks", href: "/instalinks", icon: "", reactIcon: FaInstagram },
-    { name: "Google sheet", href: "https://docs.google.com/spreadsheets/d/18I8QnxgKxle1-pA6Cw9_VEa6hnTk_nzAApl_IV194hc/edit?", icon: "/gs.png" },
+    { name: "InstaLinks", href: "/instalinks", icon: "", reactIcon: FaInstagram , no_reg:false},
+    { name: "Google sheet", href: "https://docs.google.com/spreadsheets/d/18I8QnxgKxle1-pA6Cw9_VEa6hnTk_nzAApl_IV194hc/edit?", icon: "/gs.png", no_reg:false },
 ]
 
 export type taskprobs={
