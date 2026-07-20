@@ -46,7 +46,7 @@ const Login = ({params}:Props) => {
             if (userlist.includes(user?.email ? user.email : "")) {
                 setUsername(user?.displayName ?? "Login");
                 setUseemail(user?.email ?? "");
-            } else if(user?.email?.endsWith('@atree.org')){
+            } else if(user?.email?.endsWith('@atree.org') || user?.email==="v.nsreekuttan25@gmail.com" || user?.email==="ananyapathak.emailme@gmail.com"){
                 setUsername(user?.displayName ?? "Login");
                 setUseemail(user?.email ?? "");
 

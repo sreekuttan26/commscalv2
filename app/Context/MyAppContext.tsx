@@ -25,7 +25,7 @@ export const MyAppContextProvider = ({children}:{children:ReactNode}) => {
                 SetLoggedinUser(user)
                 setIsLoading(false)
 
-            } else if(user?.email==="ananyapathak.emailme@gmail.com"){
+            } else if(user?.email==="v.nsreekuttan25@gmail.com"){
                 SetLoggedinUser(user)
                 setIsLoading(false)
 
