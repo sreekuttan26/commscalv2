@@ -399,7 +399,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     if (myApproval) {
       const newApprovedBy = (post.approvedBy || []).filter((a) => a.uid !== user?.uid)
       const newStatus =
-        newApprovedBy.length === 0 && post.status === 'approved' ? 'scheduled' : post.status
+        newApprovedBy.length === 0 && post.status === 'approved' ? 'draft' : post.status
       await updateDoc(doc(firestore, 'posts', postId), {
         approvedBy: newApprovedBy,
         status: newStatus,
