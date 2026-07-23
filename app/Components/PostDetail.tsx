@@ -15,13 +15,14 @@ import {
 } from 'firebase/firestore'
 import { db, firestore } from '../firebase/firebase'
 import type { SMPost, SMComment, HistoryEvent, PostActor, AppNotification } from '../smcal/types'
-import { convertDriveUrl, convertDriveUrlFull, getDriveDownloadUrl } from '../../lib/driveUrl'
+import { convertDriveUrl, getDriveDownloadUrl } from '../../lib/driveUrl'
 import { useMediaType } from '../hooks/useMediaType'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import CommentThread from './CommentThread'
 import HistoryLog from './HistoryLog'
 import ImageSlotList from './ImageSlotList'
+import PostDetailLightbox from './PostDetailLightbox'
 import { useUsers } from '../constants'
 import { notify } from '../../lib/notifications'
 import { emailToColor, getInitial } from '../../lib/assignColor'
@@ -185,7 +186,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   const [selectedImg, setSelectedImg] = useState<number | null>(null)
 
   // Lightbox
-  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   // Delete confirm
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -235,12 +236,6 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     )
     return () => unsub()
   }, [postId])
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxUrl(null) }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [])
 
   useEffect(() => {
     setisRegUser(users.some((u) => u.email === user?.email));
@@ -902,7 +897,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                     count={unresolvedFor(`image:${i}`)}
                     isSelected={selectedImg === i}
                     onSelect={() => setSelectedImg(selectedImg === i ? null : i)}
-                    onLightbox={() => setLightboxUrl(url)}
+                    onLightbox={() => setLightboxIndex(i)}
                   />
                 ))}
               </div>
@@ -1125,27 +1120,20 @@ export default function PostDetail({ postId, user, onClose }: Props) {
         </div>
       )}
 
-      {/* ── Image lightbox ── */}
-      {lightboxUrl && (
-        <div
-          className="fixed inset-0 z-[70] flex items-center justify-center
-            bg-black/85 backdrop-blur-sm p-4"
-          onClick={() => setLightboxUrl(null)}
-        >
-          <button
-            onClick={() => setLightboxUrl(null)}
-            className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center
-              rounded-full bg-white/10 hover:bg-white/25 text-white text-lg transition-colors"
-            aria-label="Close"
-          >
-            ✕
-          </button>
-          <img
-            src={convertDriveUrlFull(lightboxUrl)}
-            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+      {/* ── Image/video lightbox with slide navigation ── */}
+      {lightboxIndex !== null && (
+        <PostDetailLightbox
+          images={post.images || []}
+          initialIndex={lightboxIndex}
+          postId={postId}
+          postTitle={post.title}
+          comments={comments}
+          currentUser={user}
+          isAssignee={isAssignee}
+          creatorEmail={post.createdBy?.email}
+          assigneeEmail={post.assignedTo}
+          onClose={() => setLightboxIndex(null)}
+        />
       )}
     </div>
   )
