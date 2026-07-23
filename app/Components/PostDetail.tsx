@@ -58,13 +58,14 @@ function formatIST(ts: Timestamp | null | undefined): string {
 // Drive metadata) can be called at this component's own top level, not inside the
 // parent's .map() callback — hooks can't be called from a nested function.
 function MediaGridItem({
-  url, count, isSelected, onSelect, onLightbox,
+  url, count, isSelected, onSelect, onLightbox, index,
 }: {
   url: string
   count: number
   isSelected: boolean
   onSelect: () => void
   onLightbox: () => void
+  index:number
 }) {
   const isVideo = useMediaType(url) === 'video'
 
@@ -142,12 +143,20 @@ function MediaGridItem({
       <button
         onClick={(e) => { e.stopPropagation(); onSelect() }}
         title="Comments"
-        className={`absolute -top-2 -right-2 w-5 h-5 text-[10px] rounded-full
+        className={`absolute -top-2 px-2 right-5  h-5 text-[10px] rounded-full
           flex items-center justify-center font-bold shadow-sm
           ${count > 0 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'}`}
-      >
-        {count}
+      > 
+       Comments {count}
       </button>
+
+      {/* item order */}
+      <div className={`absolute -top-2 -left-2 w-5 h-5 text-[10px] rounded-full
+          flex items-center justify-center font-bold shadow-sm bg-gray-200 text-gray-500`}>
+            {index}
+
+
+      </div>
     </div>
   )
 }
@@ -888,6 +897,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                 {(post.images || []).map((url, i) => (
                   <MediaGridItem
                     key={i}
+                    index={i+1}
                     url={url}
                     count={unresolvedFor(`image:${i}`)}
                     isSelected={selectedImg === i}
