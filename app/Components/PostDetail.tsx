@@ -66,7 +66,7 @@ function MediaGridItem({
   isSelected: boolean
   onSelect: () => void
   onLightbox: () => void
-  index:number
+  index: number
 }) {
   const isVideo = useMediaType(url) === 'video'
 
@@ -147,14 +147,14 @@ function MediaGridItem({
         className={`absolute -top-2 px-2 right-5  h-5 text-[10px] rounded-full
           flex items-center justify-center font-bold shadow-sm
           ${count > 0 ? 'bg-orange-500 text-white' : 'bg-gray-200 text-gray-500'}`}
-      > 
-       Comments {count}
+      >
+        Comments {count}
       </button>
 
       {/* item order */}
       <div className={`absolute -top-2 -left-2 w-5 h-5 text-[10px] rounded-full
           flex items-center justify-center font-bold shadow-sm bg-gray-200 text-gray-500`}>
-            {index}
+        {index}
 
 
       </div>
@@ -349,6 +349,27 @@ export default function PostDetail({ postId, user, onClose }: Props) {
     const before = formatIST(post.scheduledAt)
     const after = dayjs.tz(scheduleDraft, IST).format('DD MMM YYYY, hh:mm A')
     await updateDoc(doc(firestore, 'posts', postId), { scheduledAt: Timestamp.fromDate(newDate) })
+    if (post.sourceTaskId) {
+      await updateDoc(doc(firestore, 'tasks', post.sourceTaskId
+      ), { deadline: dayjs.tz(newDate, IST).format('YYYY-MM-DD') })
+
+      try {
+        const itemRef = ref(db, `items/${post.sourceTaskId}`);
+
+        await update(itemRef, {
+
+          deadline: dayjs.tz(newDate, IST).format('YYYY-MM-DD'),
+        });
+
+        // console.log(dayjs.tz(newDate, IST).format('YYYY-MM-DD'));
+      } catch (error) {
+        console.error(error);
+      }
+
+    } else {
+      console.log('Post id not found');
+    }
+
     await log('schedule_changed', before, after)
     await notifyOwners('post_edited', `${actor.name} rescheduled "${post.title}"`)
     setSaving(false); setEditingSchedule(false)
@@ -512,6 +533,27 @@ export default function PostDetail({ postId, user, onClose }: Props) {
   // ── Delete ───────────────────────────────────────────────────────────────────
   const handleDelete = async () => {
     await deleteDoc(doc(firestore, 'posts', postId))
+    if (post.sourceTaskId) {
+      await updateDoc(doc(firestore, 'tasks', post.sourceTaskId), {
+        assigned_to: [""],
+
+      })
+
+      try {
+        const itemRef = ref(db, `items/${post.sourceTaskId}`);
+
+        await update(itemRef, {
+          assigned_to: "",
+          sm_status:"No Post"
+
+        });
+
+       // console.log("sm_status updated");
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
     onClose()
   }
 
@@ -527,6 +569,27 @@ export default function PostDetail({ postId, user, onClose }: Props) {
       assignedTo: newEmail,
       assignedToName: newName,
     })
+    if (post.sourceTaskId) {
+      await updateDoc(doc(firestore, 'tasks', post.sourceTaskId), {
+        assigned_to: [newEmail],
+        //assignedToName: newName,
+      })
+      try {
+        const itemRef = ref(db, `items/${post.sourceTaskId}`);
+
+        await update(itemRef, {
+          assigned_to: newEmail,
+        });
+
+        // console.log("sm_status updated");
+      } catch (error) {
+        console.error(error);
+      }
+
+
+    }
+
+    //console.log(postId)
     await log('assignment_changed', before, after)
     await notify({
       recipients: [newEmail],
@@ -892,7 +955,7 @@ export default function PostDetail({ postId, user, onClose }: Props) {
                 {(post.images || []).map((url, i) => (
                   <MediaGridItem
                     key={i}
-                    index={i+1}
+                    index={i + 1}
                     url={url}
                     count={unresolvedFor(`image:${i}`)}
                     isSelected={selectedImg === i}

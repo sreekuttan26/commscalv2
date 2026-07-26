@@ -8,7 +8,8 @@ import { doc, getDoc } from "firebase/firestore"
 type appContexType = {
     user: User | null,
     isRegUser: boolean,
-    loading: boolean
+    loading: boolean,
+    role:string,
 }
 
 const myAppContext = createContext<appContexType | null>(null)
@@ -16,6 +17,7 @@ export const MyAppContextProvider = ({children}:{children:ReactNode}) => {
     const [loggedinUser, SetLoggedinUser] = useState<User | null>(null)
     const [isRegUser, SetIsRegUser] = useState(false)
     const[loading, setIsLoading]=useState(true)
+    const[role, setrole]=useState("")
 
 
     useEffect(() => {
@@ -53,6 +55,13 @@ export const MyAppContextProvider = ({children}:{children:ReactNode}) => {
             const regUser = await getDoc(userRef)
             
             SetIsRegUser( regUser.exists())
+
+            if( regUser.exists()){
+            setrole(regUser.data().role)
+
+            }
+
+
         }catch(e){
            console.log(e)
         }
@@ -79,7 +88,8 @@ export const MyAppContextProvider = ({children}:{children:ReactNode}) => {
     const value={
         user:loggedinUser,
         loading:loading,
-        isRegUser:isRegUser
+        isRegUser:isRegUser,
+        role:role
     }
 
     return <myAppContext.Provider value={value} >

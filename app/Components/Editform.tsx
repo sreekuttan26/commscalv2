@@ -30,7 +30,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
-    const{isRegUser}=UserMyAppContext()
+    const{isRegUser, role}=UserMyAppContext()
 
     const [username, setUsername] = useState<string | null>("null");
     useEffect(() => {
@@ -517,7 +517,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             <div className='absolute top-0 left-0 bg-black opacity-15 w-full h-full' onClick={changeformvisibility}></div>
 
             <div className='absolute w-[90%] max-h-[80%] p-4 flex flex-col z-30 bg-white rounded-lg shadow-lg m-4 overflow-y-scroll ' >
-                <h1 className='w-full text-xl font-semibold text-gray-700'>Edit Item</h1>
+                <h1 className='w-full text-xl font-semibold text-gray-700'>Edit Item </h1>
 
                 {(selectedEntry?.addedBy || selectedEntry?.updatedBy) && (
                     <div className="w-full text-xs text-gray-500 border-b border-gray-100 pb-2 mb-3 flex flex-col gap-1">
@@ -587,7 +587,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Assign to</label>
-                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser?"":"hidden"}`} type='text' list='assign' onKeyDown={(e) => {
+                    <input className={`p-2 border-2 border-gray-100 rounded-xl shadow text-sm ${isRegUser && role==="admin"?"":"hidden"}`} type='text' list='assign' onKeyDown={(e) => {
                         if (e.key === 'Enter' && e.currentTarget.value.trim() !== "") {
                             if (!assign_to.includes(e.currentTarget.value.trim())) {
                                 setAssignTo([...assign_to, e.currentTarget.value.trim()]);
