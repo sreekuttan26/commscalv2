@@ -50,12 +50,14 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
     const [message, setMessage] = useState<string>('Select a file to start the upload.');
     const [loading, setLoading] = useState<boolean>(false);
     const [uploadlabel, setuploadlabel] = useState("Select a file");
+    const[uplaodStatus, setUploadStataus]=useState(true)
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (loading) {
             setMessage('upload in progress')
             return;
         }
+        
 
         const selecetedFile = e.target.files?.[0]
 
@@ -65,6 +67,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
         }
 
         //check file selected
+        setUploadStataus(true)
         setLoading(true)
         setMessage("uploading file " + selecetedFile.name)
         setuploadlabel("Uploading file " + selecetedFile.name)
@@ -83,6 +86,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
 
             if (!response.ok) {
                 const errordata = await response.json()
+                 setUploadStataus(false)
                 throw new Error(errordata.error || "upload failed on server");
             }
 
@@ -97,10 +101,15 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
 
         } catch (error) {
             console.log("upload error: " + error)
+             setUploadStataus(false)
 
         } finally {
             setLoading(false)
             setuploadlabel("Select a file")
+             setUploadStataus(true)
+
+
+           
 
         }
 
@@ -347,6 +356,9 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
 
                         <label className='text-sm font-medium text-gray-600 px-2'>URL*</label>
                         <input className={`p-2 border-2 ${url_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+                        {!uplaodStatus && <span className='text-sm text-red-800 px-2'>File Uplod failed. Upload to the <a className='text-blue-700 underline' href='https://drive.google.com/drive/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI' target='_blank'>folder</a> direcly and paste the url</span>}
+                        {uplaodStatus && <span className='text-sm text-blue-800 px-2'>Max upload size is 4 MB. If larger, upload to the <a className='text-blue-500 font-bold underline' href='https://drive.google.com/drive/folders/1YgMS9-em71U_UfSdfydsihLgOggTrUDI' target='_blank'>folder</a> direcly and paste the url</span>}
+
 
                         <div className='flex items-center p-2'>
                             <label
@@ -410,11 +422,15 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Mentions</label>
+                    <span className='text-xs font-medium text-gray-600 px-2'>Use comma(,) or Enter key to add</span>
                     <input className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
                         if ((e.key === 'Enter' || e.key === ',' )  && e.currentTarget.value.trim() !== "") {
+                            e.preventDefault();
                             if (!mentions.includes(e.currentTarget.value.trim())) {
                                 setMentions([...mentions, e.currentTarget.value.trim()]);
+                                
                                 e.currentTarget.value = "";
+                               
                             } else {
                                 e.currentTarget.value = "";
                             }
