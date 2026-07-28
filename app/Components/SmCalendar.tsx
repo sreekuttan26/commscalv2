@@ -203,8 +203,8 @@ function CalendarCell({
   const [expanded, setExpanded] = useState(false)
   const dateStr = toCellDateStr(date)
   const isToday = dateStr === today
-  const visible = expanded ? posts : posts.slice(0, 2)
-  const hidden  = posts.length - 2
+  const visible = expanded ? posts : posts.slice(0, 3)
+  const hidden  = posts.length - 3
 
   return (
     <div
