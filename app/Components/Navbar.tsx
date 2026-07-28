@@ -1,6 +1,6 @@
 'use client'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { nav_items } from '../constants'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
@@ -46,6 +46,42 @@ const Navbar = ({ current_page }: navprobes) => {
   const [isHovered, setIsHovered] = useState<number | null>(null);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const prevCount = useRef(0);
+  const hasInteracted = useRef(false);
+  const[isBell, setIsBell]=useState(true)
+
+  const isBellRef = useRef(true);
+  useEffect(() => {
+  isBellRef.current = isBell;
+}, [isBell]);
+
+  useEffect(() => {
+    audioRef.current = new Audio("/notify.mp3");
+
+    const unlockAudio = async () => {
+      hasInteracted.current = true;
+
+      // try {
+      //   await audioRef.current?.play();
+      //   audioRef.current?.pause();
+      //   if (audioRef.current) {
+      //     audioRef.current.currentTime = 0;
+      //   }
+      // } catch (err) {
+      //   console.log("Audio unlock failed", err);
+      // }
+
+      window.removeEventListener("pointerdown", unlockAudio);
+    };
+
+    window.addEventListener("pointerdown", unlockAudio);
+
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+    };
+  }, []);
+
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -70,10 +106,29 @@ const Navbar = ({ current_page }: navprobes) => {
     const unsubscribe = onSnapshot(q, (snap) => {
       const items = snap.docs.map((d) => ({ id: d.id, ...d.data() } as AppNotification));
       items.sort((a, b) => (b.createdAt?.toMillis?.() ?? 0) - (a.createdAt?.toMillis?.() ?? 0));
+
+      if (prevCount.current && items.length > prevCount.current) {
+        playAudio();
+      }
+
+      prevCount.current = items.length;
+
       setNotifications(items);
     });
     return () => unsubscribe();
   }, [useremail]);
+
+  const playAudio = async () => {
+    //console.log('isbell= '+isBell)
+    if (!hasInteracted.current || !audioRef.current ||   !isBellRef.current) return;
+
+    try {
+      audioRef.current.currentTime = 0;
+      await audioRef.current.play();
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -101,7 +156,7 @@ const Navbar = ({ current_page }: navprobes) => {
     }
   };
 
-  const{isRegUser}=UserMyAppContext()
+  const { isRegUser } = UserMyAppContext()
 
   return (
     <div className="flex h-full z-20 sm:w-[200px] min-h-[99vh] flex-col 
@@ -178,7 +233,15 @@ const Navbar = ({ current_page }: navprobes) => {
               max-h-[420px] flex flex-col bg-white text-gray-800 rounded-2xl shadow-2xl
               border border-gray-200 overflow-hidden">
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 flex-shrink-0">
-                <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
+                <div onClick={()=>setIsBell(!isBell)} className='flex cursor-pointer'>
+                   <h3 className="text-sm font-semibold text-gray-700">Notifications</h3>
+                   {isBell && <p>🔔</p>}
+                   {!isBell &&  <p>🔕</p>}
+                  
+                
+
+                </div>
+               
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
@@ -246,7 +309,7 @@ const Navbar = ({ current_page }: navprobes) => {
             onMouseEnter={() => setIsHovered(index)}
             onMouseLeave={() => setIsHovered(null)}
             className={`group w-full p-2.5 flex items-center gap-3 rounded-xl 
-              transition-all duration-200 relative overflow-hidden ${item.no_reg || isRegUser?"flex":"hidden"}
+              transition-all duration-200 relative overflow-hidden ${item.no_reg || isRegUser ? "flex" : "hidden"}
               ${current_page === item.name
                 ? "bg-white/15 text-white shadow-lg border border-white/20"
                 : "text-blue-200 hover:bg-white/10 hover:text-white border border-transparent"
