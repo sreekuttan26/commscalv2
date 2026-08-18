@@ -569,13 +569,13 @@ const Page = () => {
 
                 </div>
                 <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: isdataformopen ? 'flex' : 'none' }}>
-                    <Dataform changeformvisibility={changeformvisibility} showToast={showToast} user={username || 'user not found'} />
+                    <Dataform changeformvisibility={changeformvisibility} showToast={showToast} user={username || 'user not found'} items={entries} />
 
                 </div>
 
 
                 <div className='absolute top-0 right-0 z-15  h-full w-full flex justify-center items-center' style={{ display: iseditformopen ? 'flex' : 'none' }}>
-                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} user={username || 'user not found'} userEmail={user?.email ||""} />
+                    <Editform changeformvisibility={manageeditform} selectedEntry={selectedEntry} showToast={showToast} user={username || 'user not found'} userEmail={user?.email ||""} items={entries} />
 
                 </div>
 

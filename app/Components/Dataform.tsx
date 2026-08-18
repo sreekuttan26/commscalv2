@@ -1,11 +1,12 @@
 
-import React, { useEffect, useState } from 'react'
-import { categorylist, itemprobes, mentionlist, platformlist, taskprobs } from '../constants'
+import React, { useEffect, useMemo, useState } from 'react'
+import { CATEGORIES, buildTagSuggestions, itemprobes, mentionlist, platformlist, taskprobs } from '../constants'
 import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add } from 'date-fns';
 import { doc, setDoc } from 'firebase/firestore';
 import { submitToSheet } from '../Posttosheet';
+import TagInput from './TagInput';
 
 
 interface UploadResponse {
@@ -20,9 +21,10 @@ type Props = {
 
     changeformvisibility: () => void,
     showToast?: (message: string) => void,
+    items?: itemprobes[],
 }
 
-const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
+const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) => {
 
     const [mentions, setMentions] = useState<string[]>([]);
     const [assignedTo, setassign_to] = useState<string[]>([]);
@@ -37,6 +39,9 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
     const [category, setCategory] = useState<string>("");
     const [platform, setPlatform] = useState<string>("");
     const [remarks, setRemarks] = useState<string>("");
+    const [tags, setTags] = useState<string[]>([]);
+
+    const tagSuggestions = useMemo(() => buildTagSuggestions(items), [items]);
 
     const [date_error, setDate_error] = useState<boolean>(false);
     const [categorry_error, setCategory_error] = useState<boolean>(false);
@@ -149,7 +154,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
 
     }, [mentions, date, title, smDoc, url, imgUrl, description, category, platform, remarks]);
 
-    const add_to_db = ({ date, createdon, title, smdoc, description, category, platform, url, img_url, sm_status, mention, website_status, remarks }: itemprobes) => {
+    const add_to_db = ({ date, createdon, title, smdoc, description, category, platform, url, img_url, sm_status, mention, website_status, remarks, tags }: itemprobes) => {
         const dataRef = ref(db, '/items/');
         const newdataRef = push(dataRef);
         set(newdataRef, {
@@ -168,6 +173,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
             website_status: website_status,
             addedBy: auth.currentUser?.email ?? "",
             addedAt: Date.now(),
+            tags: tags,
         })
             .then(() => {
                 //console.log('Data added successfully!');
@@ -214,6 +220,20 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
             alert("Please fill all the required fields");
             return;
         }
+
+        if (!CATEGORIES.includes(category)) {
+            alert('Please pick a valid category from the dropdown (legacy values are no longer supported)');
+            return;
+        }
+        if (tags.length < 2) {
+            alert('Please add at least 2 tags');
+            return;
+        }
+        if (tags.length > 5) {
+            alert('Maximum 5 tags allowed');
+            return;
+        }
+
         callsheetque(
             "create"
 
@@ -235,7 +255,8 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
             sm_status: "",
             mention: mentionstring,
             website_status: false,
-            remarks: remarks
+            remarks: remarks,
+            tags: tags,
         });
         changeformvisibility();
         add_to_sheet();
@@ -254,6 +275,7 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
         setRemarks("");
         setMentions([]);
         setassign_to([]);
+        setTags([]);
 
         setDate_error(false);
         setTitle_error(false);
@@ -397,13 +419,16 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Category *</label>
-                        <input className={`p-2 border-2  ${categorry_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' list='category' onChange={(e) => { setCategory(e.target.value) }} value={category}>
-                        </input>
-                        <datalist id='category'>
-                            {categorylist.map((item, index) => (
-                                <option key={index} value={item}>{item}</option>
+                        <select
+                            className={`p-2 border-2 ${categorry_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`}
+                            value={category}
+                            onChange={(e) => { setCategory(e.target.value) }}
+                        >
+                            <option value="">Select category…</option>
+                            {CATEGORIES.map((c) => (
+                                <option key={c} value={c}>{c}</option>
                             ))}
-                        </datalist>
+                        </select>
 
                     </div>
                     <div className='w-full flex flex-col '>
@@ -418,6 +443,17 @@ const Dataform = ({ changeformvisibility, showToast, user }: Props) => {
                         </datalist>
                     </div>
 
+                </div>
+
+                <div className='w-full flex flex-col py-1 mt-4'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Tags *</label>
+                    <TagInput
+                        value={tags}
+                        onChange={setTags}
+                        suggestions={tagSuggestions}
+                        maxTags={5}
+                        minTags={2}
+                    />
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>

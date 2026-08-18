@@ -80,6 +80,96 @@ export type itemprobes = {
     updatedBy?: string,
     updatedAt?: number,
     smPostId?: string,
+    tags?: string[],
+}
+
+export const CATEGORIES = [
+  'Talk@ATREE',
+  'Featured Popular Article',
+  'Authored Popular Article',
+  'Event',
+  'Authored Journal Articles',
+  'Announcement',
+  'Video',
+  'Book chapters',
+  'Podcast',
+  'Report',
+  'Comic',
+  'Awards and Recognitions',
+]
+
+export const SEED_TAGS = [
+  'Urban',
+  'Forest',
+  'Wetland',
+  'Biodiversity',
+  'Wildlife',
+  'Climate',
+  'Water',
+  'Policy',
+  'Conservation',
+  'Community',
+  'Agriculture',
+  'Sustainability',
+  'Species',
+  'Ecology',
+  'Livelihood',
+]
+
+export function normalizeTag(raw: string): string | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+
+  const words = trimmed.split(/\s+/).map((w) => {
+    // Strip trailing 's' from each word if safe
+    const singular = w.length > 2 && w.toLowerCase().endsWith('s') ? w.slice(0, -1) : w
+    // Title case
+    return singular.charAt(0).toUpperCase() + singular.slice(1).toLowerCase()
+  })
+
+  const result = words.join(' ')
+  return result || null
+}
+
+export function isDuplicateTag(tag: string, existing: string[]): boolean {
+  const lower = tag.toLowerCase()
+  return existing.some((t) => t.toLowerCase() === lower)
+}
+
+export function buildTagSuggestions(items: itemprobes[]): string[] {
+  const counts = new Map<string, number>()
+
+  items.forEach((item) => {
+    (item.tags ?? []).forEach((tag) => {
+      const key = tag.toLowerCase()
+      counts.set(key, (counts.get(key) ?? 0) + 1)
+    })
+  })
+
+  // Turn back into normalized display tags, sorted by frequency desc, then alpha
+  const dynamic = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([key]) => {
+      // Look up the display casing from the first item that has it
+      for (const it of items) {
+        const match = it.tags?.find((t) => t.toLowerCase() === key)
+        if (match) return match
+      }
+      return key
+    })
+
+  // Merge seed + dynamic, dedupe case-insensitively, keep first occurrence
+  const seen = new Set<string>()
+  const merged: string[] = []
+  ;[...SEED_TAGS, ...dynamic].forEach((tag) => {
+    const key = tag.toLowerCase()
+    if (!seen.has(key)) {
+      seen.add(key)
+      merged.push(tag)
+    }
+  })
+
+  return merged
 }
 
 export const categorylist = [

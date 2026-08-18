@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react'
-import { categorylist, delete_sheet_row_url, itemprobes, mentionlist, platformlist, sheetupdateurl, taskprobs, useUsers } from '../constants'
+import React, { useEffect, useMemo, useState } from 'react'
+import { CATEGORIES, buildTagSuggestions, delete_sheet_row_url, itemprobes, mentionlist, platformlist, sheetupdateurl, taskprobs, useUsers } from '../constants'
 import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add, format } from 'date-fns';
@@ -7,6 +7,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { deleteDoc, doc, getDoc, setDoc } from 'firebase/firestore';
 import { submitToSheet } from '../Posttosheet';
 import { UserMyAppContext } from '../Context/MyAppContext';
+import TagInput from './TagInput';
 
 type Props = {
 
@@ -16,6 +17,7 @@ type Props = {
     changeformvisibility: () => void | null,
     selectedEntry?: itemprobes | null
     showToast?: (message: string) => void
+    items?: itemprobes[]
 }
 
 function formatTimestamp(ms: number): string {
@@ -26,7 +28,7 @@ function formatTimestamp(ms: number): string {
     });
 }
 
-const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEmail="" }: Props) => {
+const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEmail="", items = [] }: Props) => {
     const { users, loading } = useUsers();
     const userlist = users.map(user => user.email);
 
@@ -84,6 +86,10 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             ? `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/smcal/${selectedEntry.smPostId}`
             : null;
 
+        const [tags, setTags] = useState<string[]>(selectedEntry?.tags ?? []);
+
+        const tagSuggestions = useMemo(() => buildTagSuggestions(items), [items]);
+
 
 
     useEffect(() => {
@@ -95,7 +101,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
     }, [mentions, assign_to, date, title, smDoc, url, imgUrl, description, category, platform, remarks]);
 
-    const add_to_db = ({ date, createdon, title, assigned_to, deadline, description, category, platform, url, img_url, mention, remarks, sm_status }: itemprobes) => {
+    const add_to_db = ({ date, createdon, title, assigned_to, deadline, description, category, platform, url, img_url, mention, remarks, sm_status, tags }: itemprobes) => {
         const dataRef = ref(db, '/items/' + selectedEntry?.id);
         const newdataRef = push(dataRef);
 
@@ -119,7 +125,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             img_url: img_url,
             mention: mention,
             remarks: remarks,
-            sm_status:sm_status
+            sm_status:sm_status,
+            tags: tags,
         };
 
         // Self-edits by the original creator aren't tracked as updates.
@@ -178,6 +185,19 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             return;
         }
 
+        if (!CATEGORIES.includes(category)) {
+            alert('Please pick a valid category from the dropdown (legacy values are no longer supported)');
+            return;
+        }
+        if (tags.length < 2) {
+            alert('Please add at least 2 tags');
+            return;
+        }
+        if (tags.length > 5) {
+            alert('Maximum 5 tags allowed');
+            return;
+        }
+
           callsheetque(
             "replace"
 
@@ -214,7 +234,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             sm_status: customsm_status,
             mention: mentionstring,
             website_status: false,
-            remarks: remarks
+            remarks: remarks,
+            tags: tags,
         });
         update_Sheet(date, title, sm_status);
 
@@ -330,6 +351,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
         setRemarks("");
         setMentions([]);
         setAssignTo([]);
+        setTags([]);
 
 
     }
@@ -455,6 +477,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             SetWTWStatus(selectedEntry?.wtw_status ? selectedEntry.wtw_status : false);
 
             setSmDeadline(selectedEntry.deadline ? selectedEntry.deadline : "");
+            setTags(selectedEntry.tags ?? []);
 
             if (selectedEntry.mention) {
                 const mentionArray = selectedEntry.mention.split(",").map(item => item.trim());
@@ -711,13 +734,19 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Category</label>
-                        <input className={`p-2 border-2  ${categorry_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' list='category' onChange={(e) => { setCategory(e.target.value) }} value={category}>
-                        </input>
-                        <datalist id='category'>
-                            {categorylist.map((item, index) => (
-                                <option key={index} value={item}>{item}</option>
+                        <select
+                            className={`p-2 border-2 ${categorry_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`}
+                            value={category}
+                            onChange={(e) => { setCategory(e.target.value) }}
+                        >
+                            <option value="">Select category…</option>
+                            {category && !CATEGORIES.includes(category) && (
+                                <option value={category} className="italic">{category} (legacy — please pick a new value)</option>
+                            )}
+                            {CATEGORIES.map((c) => (
+                                <option key={c} value={c}>{c}</option>
                             ))}
-                        </datalist>
+                        </select>
 
                     </div>
                     <div className='w-full flex flex-col '>
@@ -732,6 +761,17 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                         </datalist>
                     </div>
 
+                </div>
+
+                <div className='w-full flex flex-col py-1 mt-4'>
+                    <label className='text-sm font-medium text-gray-600 px-2'>Tags</label>
+                    <TagInput
+                        value={tags}
+                        onChange={setTags}
+                        suggestions={tagSuggestions}
+                        maxTags={5}
+                        minTags={2}
+                    />
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
