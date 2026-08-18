@@ -78,6 +78,12 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
         const [click, setClick]=useState<boolean>(false);
 
+        const [copyStatus, setCopyStatus] = useState('');
+
+        const smPostUrl = selectedEntry?.smPostId
+            ? `${process.env.NEXT_PUBLIC_APP_URL || (typeof window !== 'undefined' ? window.location.origin : '')}/smcal/${selectedEntry.smPostId}`
+            : null;
+
 
 
     useEffect(() => {
@@ -544,6 +550,8 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     </div>
                 )}
 
+               
+
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Date</label>
                     <input className={`p-2 border-2  ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
@@ -580,8 +588,68 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     </div>
 
                 </div>
+
+                 {smPostUrl && (
+                    <div className="w-full border-t border-gray-100 pt-2 mt-2 mb-3
+                        flex flex-col sm:flex-row sm:items-center gap-2">
+
+                        {/* Icon + URL text */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <span className="text-blue-500 text-sm flex-shrink-0">📱</span>
+                            <span className="text-xs font-medium text-gray-700 flex-shrink-0">SM Post:</span>
+                            <a
+                                href={smPostUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-blue-600 hover:text-blue-800 underline truncate"
+                                title={smPostUrl}
+                            >
+                                {smPostUrl}
+                            </a>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex gap-2 flex-shrink-0">
+                            <a
+                                href={smPostUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs bg-blue-50 hover:bg-blue-100 text-blue-700
+                                    border border-blue-200 rounded-lg px-2.5 py-1 flex items-center gap-1"
+                            >
+                                🔗 View SM Post
+                            </a>
+                            <button
+                                type="button"
+                                onClick={async (e) => {
+                                    e.preventDefault();
+                                    try {
+                                        await navigator.clipboard.writeText(smPostUrl);
+                                        setCopyStatus('Copied!');
+                                        setTimeout(() => setCopyStatus(''), 2000);
+                                    } catch {
+                                        setCopyStatus('Failed to copy');
+                                        setTimeout(() => setCopyStatus(''), 2000);
+                                    }
+                                }}
+                                className="text-xs bg-gray-50 hover:bg-gray-100 text-gray-700
+                                    border border-gray-200 rounded-lg px-2.5 py-1 flex items-center gap-1"
+                            >
+                                📋 {copyStatus || 'Copy'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+
+
                 <div className='text-xs p-2'>
-                    <h1 >SM: {sm_status}</h1>
+                    <h1 >SM Status: {sm_status}</h1>
+
+                </div>
+
+                <div className={`text-xs text-red-800 p-2 ${isRegUser?"hidden":"flex"}`}>
+                    <h1 >Deadline: {Smdeadline}</h1>
 
                 </div>
 

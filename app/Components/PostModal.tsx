@@ -8,7 +8,8 @@ import {
   Timestamp,
   updateDoc,
 } from 'firebase/firestore'
-import { firestore } from '../firebase/firebase'
+import { ref, update } from 'firebase/database'
+import { db, firestore } from '../firebase/firebase'
 import dayjs from '../../lib/dayjs'
 import { IST } from '../../lib/dayjs'
 import ImageSlotList from './ImageSlotList'
@@ -97,6 +98,12 @@ export default function PostModal({ user, prefilledDate, onClose, taskPrefill }:
         await updateDoc(doc(firestore, 'tasks', taskPrefill.taskId), {
           linkedSmPostId: postId,
         })
+
+        if (taskPrefill.taskId) {
+          const itemRef = ref(db, `/items/${taskPrefill.taskId}`)
+          await update(itemRef, { smPostId: postId })
+          console.log("sm post id :"+postId)
+        }
 
         const adminEmails = users.filter((u) => u.role === 'admin').map((u) => u.email)
         await notify({

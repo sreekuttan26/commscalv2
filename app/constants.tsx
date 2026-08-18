@@ -79,6 +79,7 @@ export type itemprobes = {
     addedAt?: number,
     updatedBy?: string,
     updatedAt?: number,
+    smPostId?: string,
 }
 
 export const categorylist = [
