@@ -145,7 +145,7 @@ function TasksPopup({
   accentColor: string;
 }) {
   const [search, setSearch] = useState("");
-  
+
 
   const displayed = tasks.filter(
     (t) =>
@@ -294,8 +294,8 @@ function TasksPopup({
                         <span
                           key={j}
                           className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg border font-medium ${task.completed_by?.includes(person)
-                              ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                              : "bg-amber-50 text-amber-700 border-amber-200"
+                            ? "bg-emerald-100 text-emerald-700 border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
                             }`}
                         >
                           <span className={`w-1.5 h-1.5 rounded-full ${task.completed_by?.includes(person) ? "bg-emerald-500" : "bg-amber-400"}`} />
@@ -517,7 +517,7 @@ export default function Home() {
       light: "bg-red-50", text: "text-red-600",
     },
   ];
-  const{user, loading, isRegUser}=UserMyAppContext()
+  const { user, loading, isRegUser } = UserMyAppContext()
 
 
   return (
@@ -576,44 +576,44 @@ export default function Home() {
 
           {/* ── Stat Cards ── */}
           {isRegUser &&
-          <section>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 ">
-              {statCards.map((stat, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] group"
-                  onClick={() =>
-                    setTaskPopup({
-                      title: stat.label,
-                      tasks: stat.tasks,
-                      icon: stat.icon,
-                      accentColor: stat.accentColor,
-                    })
-                  }
-                >
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-xs sm:text-sm text-gray-500 font-medium">{stat.label}</p>
-                      <p className={`text-2xl sm:text-3xl font-bold mt-1 ${stat.text}`}>{stat.value}</p>
+            <section>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 ">
+                {statCards.map((stat, i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-5 hover:shadow-md transition-all cursor-pointer hover:scale-[1.02] active:scale-[0.98] group"
+                    onClick={() =>
+                      setTaskPopup({
+                        title: stat.label,
+                        tasks: stat.tasks,
+                        icon: stat.icon,
+                        accentColor: stat.accentColor,
+                      })
+                    }
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-xs sm:text-sm text-gray-500 font-medium">{stat.label}</p>
+                        <p className={`text-2xl sm:text-3xl font-bold mt-1 ${stat.text}`}>{stat.value}</p>
+                      </div>
+                      <div className={`w-9 h-9 sm:w-10 sm:h-10 ${stat.light} rounded-xl flex items-center justify-center text-lg sm:text-xl`}>
+                        {stat.icon}
+                      </div>
                     </div>
-                    <div className={`w-9 h-9 sm:w-10 sm:h-10 ${stat.light} rounded-xl flex items-center justify-center text-lg sm:text-xl`}>
-                      {stat.icon}
+                    <div className="mt-3 w-full bg-gray-100 rounded-full h-1.5">
+                      <div
+                        className={`h-1.5 rounded-full bg-gradient-to-r ${stat.gradient} transition-all duration-500`}
+                        style={{ width: totalTasks ? `${(stat.value / totalTasks) * 100}%` : "0%" }}
+                      />
                     </div>
+                    {/* Click hint */}
+                    <p className="text-xs text-gray-300 group-hover:text-indigo-400 mt-2 transition-colors text-right">
+                      View all →
+                    </p>
                   </div>
-                  <div className="mt-3 w-full bg-gray-100 rounded-full h-1.5">
-                    <div
-                      className={`h-1.5 rounded-full bg-gradient-to-r ${stat.gradient} transition-all duration-500`}
-                      style={{ width: totalTasks ? `${(stat.value / totalTasks) * 100}%` : "0%" }}
-                    />
-                  </div>
-                  {/* Click hint */}
-                  <p className="text-xs text-gray-300 group-hover:text-indigo-400 mt-2 transition-colors text-right">
-                    View all →
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>}
+                ))}
+              </div>
+            </section>}
 
           {/* ── Overview / Items ── */}
           <section className="bg-white rounded-2xl border border-gray-100 shadow-sm">
@@ -690,184 +690,210 @@ export default function Home() {
             </div>
           </section>
 
+
+          <div className="hidden">
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-gray-100 gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-5 bg-blue-500 rounded-full" />
+                  <h2 className="font-semibold text-gray-800">Instructions</h2>
+
+                </div>
+                
+
+
+
+
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-gray-100 gap-3" >
+                  
+                </div>
+            </section>
+          </div>
+
+
+
+
+
+
           {/* ── Tasks Section ── */}
           {isRegUser &&
-          <section className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+            <section className="bg-white rounded-2xl border border-gray-100 shadow-sm">
 
-            {/* Tasks header */}
-            <div className="flex flex-col gap-3 p-4 sm:p-5 border-b border-gray-100">
+              {/* Tasks header */}
+              <div className="flex flex-col gap-3 p-4 sm:p-5 border-b border-gray-100">
 
-              {/* Row 1 */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-1 h-5 bg-indigo-500 rounded-full" />
-                  <h2 className="font-semibold text-gray-800">Tasks</h2>
-                  <span className="ml-1 bg-indigo-100 text-indigo-600 text-xs font-medium px-2 py-0.5 rounded-full">
-                    {filtered_tasks.length}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setIstaskformopen(true)}
-                  className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span className="hidden xs:inline">Add Task</span>
-                </button>
-              </div>
-
-              {/* Row 2: search + user filter */}
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                {/* Search */}
-                <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-                  <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    placeholder="Search tasks by title, description or assignee…"
-                    value={taskSearchQuery}
-                    onChange={(e) => setTaskSearchQuery(e.target.value)}
-                    className="bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400 w-full"
-                  />
-                  {taskSearchQuery && (
-                    <button onClick={() => setTaskSearchQuery("")} className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-
-                {/* User filter */}
-                <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
-                  <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                  <select
-                    className="bg-transparent text-sm text-gray-700 outline-none cursor-pointer"
-                    onChange={(e) => Setcurrent_task_user(e.target.value)}
-                    value={current_task_user}
+                {/* Row 1 */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1 h-5 bg-indigo-500 rounded-full" />
+                    <h2 className="font-semibold text-gray-800">Tasks</h2>
+                    <span className="ml-1 bg-indigo-100 text-indigo-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                      {filtered_tasks.length}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setIstaskformopen(true)}
+                    className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white text-sm font-medium px-4 py-2 rounded-xl shadow-sm hover:shadow-md transition-all active:scale-95"
                   >
-                    <option value="">All Members</option>
-                    {user_email_list.map((email, i) => (
-                      <option key={i} value={email}>{email}</option>
-                    ))}
-                  </select>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span className="hidden xs:inline">Add Task</span>
+                  </button>
                 </div>
+
+                {/* Row 2: search + user filter */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                  {/* Search */}
+                  <div className="flex-1 flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                    <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      placeholder="Search tasks by title, description or assignee…"
+                      value={taskSearchQuery}
+                      onChange={(e) => setTaskSearchQuery(e.target.value)}
+                      className="bg-transparent text-sm outline-none text-gray-700 placeholder-gray-400 w-full"
+                    />
+                    {taskSearchQuery && (
+                      <button onClick={() => setTaskSearchQuery("")} className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* User filter */}
+                  <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-100 transition-all">
+                    <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <select
+                      className="bg-transparent text-sm text-gray-700 outline-none cursor-pointer"
+                      onChange={(e) => Setcurrent_task_user(e.target.value)}
+                      value={current_task_user}
+                    >
+                      <option value="">All Members</option>
+                      {user_email_list.map((email, i) => (
+                        <option key={i} value={email}>{email}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Active search tag */}
+                {taskSearchQuery && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Results for:</span>
+                    <span className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full">
+                      {taskSearchQuery}
+                      <button onClick={() => setTaskSearchQuery("")} className="hover:text-indigo-900 transition-colors ml-0.5">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {filtered_tasks.length} result{filtered_tasks.length !== 1 ? "s" : ""}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* Active search tag */}
-              {taskSearchQuery && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">Results for:</span>
-                  <span className="inline-flex items-center gap-1 bg-indigo-100 text-indigo-700 text-xs font-medium px-2.5 py-1 rounded-full">
-                    {taskSearchQuery}
-                    <button onClick={() => setTaskSearchQuery("")} className="hover:text-indigo-900 transition-colors ml-0.5">
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                  </span>
-                  <span className="text-xs text-gray-400">
-                    {filtered_tasks.length} result{filtered_tasks.length !== 1 ? "s" : ""}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Tabs */}
-            <div className="flex gap-1 px-4 sm:px-5 pt-3 border-b border-gray-100">
-              {(["all", "pending", "completed"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 text-sm font-medium rounded-t-lg capitalize transition-colors border-b-2 -mb-px ${activeTab === tab
+              {/* Tabs */}
+              <div className="flex gap-1 px-4 sm:px-5 pt-3 border-b border-gray-100">
+                {(["all", "pending", "completed"] as const).map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-4 py-2 text-sm font-medium rounded-t-lg capitalize transition-colors border-b-2 -mb-px ${activeTab === tab
                       ? "border-indigo-500 text-indigo-600 bg-indigo-50/50"
                       : "border-transparent text-gray-500 hover:text-gray-700"
-                    }`}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
+                      }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
 
-            {/* Task list */}
-            <div className="divide-y divide-gray-50 max-h-[520px] overflow-y-auto">
-              {filtered_tasks.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16 text-gray-400">
-                  <p className="text-5xl mb-3">{taskSearchQuery ? "🔍" : "🎉"}</p>
-                  <p className="font-medium text-gray-500">
-                    {taskSearchQuery ? `No tasks match "${taskSearchQuery}"` : "No tasks found"}
-                  </p>
-                  <p className="text-sm mt-1">
-                    {taskSearchQuery ? "Try a different search term" : activeTab !== "all" ? "Try switching tabs" : 'Click "Add Task" to get started'}
-                  </p>
-                </div>
-              ) : (
-                filtered_tasks.map((task, index) => {
-                  const priority = getPriorityLevel(task.deadline);
-                  const pConf = priorityConfig[priority];
-                  const completion = getTaskCompletionRate(task);
-                  const daysLeft = task.deadline
-                    ? Math.ceil((new Date(task.deadline).getTime() - Date.now()) / 86400000)
-                    : null;
+              {/* Task list */}
+              <div className="divide-y divide-gray-50 max-h-[520px] overflow-y-auto">
+                {filtered_tasks.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+                    <p className="text-5xl mb-3">{taskSearchQuery ? "🔍" : "🎉"}</p>
+                    <p className="font-medium text-gray-500">
+                      {taskSearchQuery ? `No tasks match "${taskSearchQuery}"` : "No tasks found"}
+                    </p>
+                    <p className="text-sm mt-1">
+                      {taskSearchQuery ? "Try a different search term" : activeTab !== "all" ? "Try switching tabs" : 'Click "Add Task" to get started'}
+                    </p>
+                  </div>
+                ) : (
+                  filtered_tasks.map((task, index) => {
+                    const priority = getPriorityLevel(task.deadline);
+                    const pConf = priorityConfig[priority];
+                    const completion = getTaskCompletionRate(task);
+                    const daysLeft = task.deadline
+                      ? Math.ceil((new Date(task.deadline).getTime() - Date.now()) / 86400000)
+                      : null;
 
-                  return (
-                    <div
-                      key={index}
-                      className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 sm:p-5 hover:bg-gray-50/80 cursor-pointer transition-colors group"
-                      onClick={() => manageeditform(task)}
-                    >
-                      <div className="flex-shrink-0 pt-1">
-                        <div className={`w-2.5 h-2.5 rounded-full ${pConf.dot}`} />
-                      </div>
+                    return (
+                      <div
+                        key={index}
+                        className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-4 sm:p-5 hover:bg-gray-50/80 cursor-pointer transition-colors group"
+                        onClick={() => manageeditform(task)}
+                      >
+                        <div className="flex-shrink-0 pt-1">
+                          <div className={`w-2.5 h-2.5 rounded-full ${pConf.dot}`} />
+                        </div>
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-gray-800 text-sm sm:text-base group-hover:text-indigo-600 transition-colors truncate">
-                            {task.title}
-                          </h3>
-                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${task.current_status == "Posted" ? "hidden" : "flex"}  ${pConf.bg} ${pConf.text} ${pConf.border} flex-shrink-0`}>
-                            {pConf.label}
-                          </span>
-                          {task.category && (
-                            <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200 flex-shrink-0">
-                              {task.category}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-gray-800 text-sm sm:text-base group-hover:text-indigo-600 transition-colors truncate">
+                              {task.title}
+                            </h3>
+                            <span className={`text-xs font-medium px-2 py-0.5 rounded-full border ${task.current_status == "Posted" ? "hidden" : "flex"}  ${pConf.bg} ${pConf.text} ${pConf.border} flex-shrink-0`}>
+                              {pConf.label}
                             </span>
+                            {task.category && (
+                              <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full border border-gray-200 flex-shrink-0">
+                                {task.category}
+                              </span>
+                            )}
+                          </div>
+
+                          {task.description && (
+                            <p className="text-xs sm:text-sm text-gray-500 mb-2 line-clamp-1">{task.description}</p>
                           )}
-                        </div>
 
-                        {task.description && (
-                          <p className="text-xs sm:text-sm text-gray-500 mb-2 line-clamp-1">{task.description}</p>
-                        )}
+                          <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                            {task.date && (
+                              <div className="flex items-center gap-1 text-xs text-gray-400">
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {format(new Date(task.date), "dd MMM yyyy")}
+                              </div>
+                            )}
+                            {task.deadline && (
+                              <div className={` items-center gap-1 text-xs font-medium ${task.current_status == "Posted" ? "hidden" : "flex"} ${daysLeft !== null && daysLeft < 0 ? "text-red-500" : daysLeft !== null && daysLeft <= 3 ? "text-orange-500" : "text-gray-400"}`}>
 
-                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                          {task.date && (
-                            <div className="flex items-center gap-1 text-xs text-gray-400">
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                              </svg>
-                              {format(new Date(task.date), "dd MMM yyyy")}
-                            </div>
-                          )}
-                          {task.deadline && (
-                            <div className={` items-center gap-1 text-xs font-medium ${task.current_status == "Posted" ? "hidden" : "flex"} ${daysLeft !== null && daysLeft < 0 ? "text-red-500" : daysLeft !== null && daysLeft <= 3 ? "text-orange-500" : "text-gray-400"}`}>
+                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                {daysLeft !== null && daysLeft < 0
+                                  ? `${Math.abs(daysLeft)}d overdue`
+                                  : daysLeft === 0 ? "Due today"
+                                    : daysLeft === 1 ? "Due tomorrow"
+                                      : `Due ${format(new Date(task.deadline), "dd MMM")}`}
+                              </div>
+                            )}
+                          </div>
 
-                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                              </svg>
-                              {daysLeft !== null && daysLeft < 0
-                                ? `${Math.abs(daysLeft)}d overdue`
-                                : daysLeft === 0 ? "Due today"
-                                  : daysLeft === 1 ? "Due tomorrow"
-                                    : `Due ${format(new Date(task.deadline), "dd MMM")}`}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* <div className="mb-2">
+                          {/* <div className="mb-2">
                           <div className="flex justify-between items-center mb-1">
                             <span className="text-xs text-gray-400">Progress</span>
                             <span className="text-xs font-medium text-gray-600">{completion}%</span>
@@ -880,30 +906,30 @@ export default function Home() {
                           </div>
                         </div> */}
 
-                        <div className="flex flex-wrap gap-1.5">
-                          {task.assigned_to?.map((person, i) => (
-                            <span
-                              key={i}
-                              className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg border font-medium ${getStatusColor(task, person)}`}
-                            >
-                              <span className={`w-1.5 h-1.5 rounded-full ${task.completed_by?.includes(person) ? "bg-emerald-500" : "bg-amber-400"}`} />
-                              {person.split("@")[0]}
-                            </span>
-                          ))}
+                          <div className="flex flex-wrap gap-1.5">
+                            {task.assigned_to?.map((person, i) => (
+                              <span
+                                key={i}
+                                className={`inline-flex items-center gap-1 text-xs px-2 py-1 rounded-lg border font-medium ${getStatusColor(task, person)}`}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full ${task.completed_by?.includes(person) ? "bg-emerald-500" : "bg-amber-400"}`} />
+                                {person.split("@")[0]}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="hidden sm:flex flex-shrink-0 items-center">
+                          <svg className="w-5 h-5 text-gray-300 group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
                         </div>
                       </div>
-
-                      <div className="hidden sm:flex flex-shrink-0 items-center">
-                        <svg className="w-5 h-5 text-gray-300 group-hover:text-indigo-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-          </section>}
+                    );
+                  })
+                )}
+              </div>
+            </section>}
 
         </div>
       </div>
@@ -956,6 +982,8 @@ export default function Home() {
           }}
         />
       )}
+
+
 
     </main>
   );
