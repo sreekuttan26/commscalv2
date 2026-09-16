@@ -726,7 +726,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <textarea disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
                 </div>
 
 
