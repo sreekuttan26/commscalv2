@@ -36,7 +36,7 @@ export const MyAppContextProvider = ({children}:{children:ReactNode}) => {
             else {
                  SetLoggedinUser(null)
                 setIsLoading(false)
-                //SetIsRegUser(false)
+                SetIsRegUser(false)
 
             }
 

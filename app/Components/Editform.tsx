@@ -577,19 +577,19 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Date</label>
-                    <input disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className={`  p-2 border-2  ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
+                    <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className={`  p-2 border-2  ${date_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='date' onChange={(e) => { setDate(e.target.value) }} value={date}></input>
                 </div>
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Title</label>
-                    <input disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className={`p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
+                    <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className={`p-2 border-2  ${title_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setTitle(e.target.value) }} value={title}></input>
                 </div>
 
                 <div className='w-full flex  py-1 mt-4 gap-5 flex-col sm:flex-row'>
                     <div className='w-full flex flex-col '>
 
                         <label  className='text-sm font-medium text-gray-600 px-2'>SM Correction Doc URL</label>
-                        <input disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setSmDoc(e.target.value) }} value={smDoc}></input>
 
                     </div>
 
@@ -713,12 +713,12 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2' ><a className={`${url.includes("http")?"flex":"hidden"}`} href={url} target="_blank">URL 🔗</a> <p className={`${url.includes("http")?"hidden":"flex"}`}>URL</p></label>
-                        <input disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className={`p-2 border-2 ${url_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className={`p-2 border-2 ${url_error?"border-red-200":"border-gray-100"} rounded-xl shadow text-sm`} type='text' onChange={(e) => { setUrl(e.target.value) }} value={url}></input>
                     </div>
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Image URL</label>
-                        <input disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' onChange={(e) => { setImgUrl(e.target.value) }} value={imgUrl}></input>
                     </div>
 
                 </div>
@@ -726,7 +726,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Description</label>
-                    <textarea disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
+                    <textarea disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setDescription(e.target.value) }} value={description} ></textarea>
                 </div>
 
 
@@ -734,7 +734,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Category</label>
-                        <select disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail}
+                        <select disabled={!isRegUser && selectedEntry?.addedBy!=userEmail}
                             className={`p-2 border-2 ${categorry_error ? "border-red-200" : "border-gray-100"} rounded-xl shadow text-sm`}
                             value={category}
                             onChange={(e) => { setCategory(e.target.value) }}
@@ -752,7 +752,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                     <div className='w-full flex flex-col '>
 
                         <label className='text-sm font-medium text-gray-600 px-2'>Platform</label>
-                        <input disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
+                        <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='platform' onChange={(e) => { setPlatform(e.target.value) }} value={platform}>
                         </input>
                         <datalist id='platform'>
                             {platformlist.map((item, index) => (
@@ -766,7 +766,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Tags</label>
                     <TagInput
-                    disabeled={!isRegUser ||selectedEntry?.addedBy!=userEmail}
+                    disabeled={!isRegUser && selectedEntry?.addedBy!=userEmail}
                         value={tags}
                         onChange={setTags}
                         suggestions={tagSuggestions}
@@ -781,7 +781,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                           <div className={`${isshowcopy?"flex":"hidden"} text-sm text-green-700`}>Copied</div>
                     </div>
                     
-                    <input disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
+                    <input disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' type='text' list='mentions' onKeyDown={(e) => {
                         if ((e.key === 'Enter' || e.key === ',' ) && e.currentTarget.value.trim() !== "") {
                             if (!mentions.includes(e.currentTarget.value.trim())) {
                                 setMentions([...mentions, e.currentTarget.value.trim()]);
@@ -801,7 +801,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                         {mentions.map((item, index) => (
                             <div className='border-2 p-2 flex gap-2 rounded-2xl' key={index}>
                                 <div>{item}</div>
-                                <div className='cursor-pointer' onClick={() => {if(!isRegUser ||selectedEntry?.addedBy!=userEmail) {return} setMentions(mentions.filter((_, i) => i !== index))}}
+                                <div className='cursor-pointer' onClick={() => {if(!isRegUser && selectedEntry?.addedBy!=userEmail) {return} setMentions(mentions.filter((_, i) => i !== index))}}
                                 >x</div>
                             </div>
                         ))}
@@ -812,7 +812,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
 
                 <div className='w-full flex flex-col py-1 mt-4'>
                     <label className='text-sm font-medium text-gray-600 px-2'>Remarks</label>
-                    <textarea disabled={!isRegUser ||selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setRemarks(e.target.value) }} value={remarks}></textarea>
+                    <textarea disabled={!isRegUser && selectedEntry?.addedBy!=userEmail} className='p-2 border-2 border-gray-100 rounded-xl shadow text-sm' onChange={(e) => { setRemarks(e.target.value) }} value={remarks}></textarea>
                 </div>
 
 
