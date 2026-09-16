@@ -9,6 +9,7 @@ interface Props {
   maxTags?: number
   minTags?: number
   placeholder?: string
+  disabeled?:boolean
 }
 
 export default function TagInput({
@@ -17,6 +18,7 @@ export default function TagInput({
   suggestions,
   maxTags = 5,
   minTags = 2,
+  disabeled=true,
   placeholder = 'Type a tag and press Enter',
 }: Props) {
   const [input, setInput] = useState('')
@@ -55,6 +57,10 @@ export default function TagInput({
   }
 
   const removeTag = (idx: number) => {
+    if(disabeled){
+      return;
+
+    }
     onChange(value.filter((_, i) => i !== idx))
   }
 
@@ -96,7 +102,7 @@ export default function TagInput({
         ))}
 
         {!atMax && (
-          <input
+          <input disabled={disabeled}
             ref={inputRef}
             type="text"
             value={input}
