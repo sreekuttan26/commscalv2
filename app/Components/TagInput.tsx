@@ -18,7 +18,7 @@ export default function TagInput({
   suggestions,
   maxTags = 5,
   minTags = 2,
-  disabeled=true,
+  disabeled=false,
   placeholder = 'Type a tag and press Enter',
 }: Props) {
   const [input, setInput] = useState('')
