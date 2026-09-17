@@ -1,6 +1,6 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { CATEGORIES, buildTagSuggestions, itemprobes, mentionlist, platformlist, taskprobs } from '../constants'
+import { categorylist, buildTagSuggestions, itemprobes, mentionlist, platformlist, taskprobs } from '../constants'
 import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add } from 'date-fns';
@@ -221,7 +221,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
             return;
         }
 
-        if (!CATEGORIES.includes(category)) {
+        if (!categorylist.includes(category)) {
             alert('Please pick a valid category from the dropdown (legacy values are no longer supported)');
             return;
         }
@@ -425,7 +425,7 @@ const Dataform = ({ changeformvisibility, showToast, user, items = [] }: Props) 
                             onChange={(e) => { setCategory(e.target.value) }}
                         >
                             <option value="">Select category…</option>
-                            {CATEGORIES.map((c) => (
+                            {categorylist.map((c) => (
                                 <option key={c} value={c}>{c}</option>
                             ))}
                         </select>

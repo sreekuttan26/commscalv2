@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { CATEGORIES, buildTagSuggestions, delete_sheet_row_url, itemprobes, mentionlist, platformlist, sheetupdateurl, taskprobs, useUsers } from '../constants'
+import { categorylist , buildTagSuggestions, delete_sheet_row_url, itemprobes, mentionlist, platformlist, sheetupdateurl, taskprobs, useUsers } from '../constants'
 import { auth, db, firestore } from '../firebase/firebase';
 import { ref, onValue, push, get, set, query, orderByChild, equalTo, update } from "firebase/database";
 import { add, format } from 'date-fns';
@@ -185,7 +185,7 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
             return;
         }
 
-        if (!CATEGORIES.includes(category)) {
+        if (!categorylist.includes(category)) {
             alert('Please pick a valid category from the dropdown (legacy values are no longer supported)');
             return;
         }
@@ -740,10 +740,10 @@ const Editform = ({ changeformvisibility, selectedEntry,showToast, user, userEma
                             onChange={(e) => { setCategory(e.target.value) }}
                         >
                             <option value="">Select category…</option>
-                            {category && !CATEGORIES.includes(category) && (
+                            {category && !categorylist.includes(category) && (
                                 <option value={category} className="italic">{category} (legacy — please pick a new value)</option>
                             )}
-                            {CATEGORIES.map((c) => (
+                            {categorylist.map((c) => (
                                 <option key={c} value={c}>{c}</option>
                             ))}
                         </select>
