@@ -865,7 +865,7 @@ const Page = () => {
 
     return (
         <main className='flex w-full max-h-screen bg-gray-50 overflow-y-scroll'>
-            <Navbar current_page="MyData" />
+            <Navbar current_page="My Data" />
 
             <div className='flex-1 min-w-0 p-4 sm:p-6 flex flex-col gap-4'>
                 <h1 className='text-xl font-semibold text-gray-800'>My Data</h1>
