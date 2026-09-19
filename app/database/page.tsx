@@ -334,13 +334,13 @@ const Page = () => {
 
 
 
-            alert("Task added successfully!");
+            //alert("Task added successfully!");
 
 
 
 
         } catch (error) {
-            alert("Error: " + error);
+            //alert("Error: " + error);
             console.error(error);
         }
 

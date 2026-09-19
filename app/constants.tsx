@@ -23,7 +23,7 @@ export const nav_items: NavItem[] = [
     { name: "SM Cal", href: "/smcal", icon: "/sm_plan.png",reactIcon: FaCalendarAlt  ,no_reg:false},
     // { name: "Website", href: "/website", icon: "/website.png" },
     { name: "InstaLinks", href: "/instalinks", icon: "", reactIcon: FaInstagram , no_reg:false},
-    { name: "My Data", href: "/myData", icon: "", reactIcon: FaReceipt  , no_reg:false},
+    { name: "My Data", href: "/myData", icon: "", reactIcon: FaReceipt  , no_reg:true},
     { name: "Google sheet", href: "https://docs.google.com/spreadsheets/d/18I8QnxgKxle1-pA6Cw9_VEa6hnTk_nzAApl_IV194hc/edit?",reactIcon: FaRegFileExcel, icon: "/gs.png", no_reg:false },
 ]
 
